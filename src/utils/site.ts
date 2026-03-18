@@ -21,6 +21,13 @@ export const defaultSites: Site[] = [
     hostname: 'github.com',
     addedAt: Date.now(),
   },
+  {
+    id: crypto.randomUUID(),
+    url: 'https://github.com/tik-choco/tc-home',
+    title: 'Home',
+    hostname: 'github.com',
+    addedAt: Date.now(),
+  },
 ];
 
 export function safeHostname(input: string) {
