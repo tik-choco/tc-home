@@ -400,6 +400,37 @@ button.danger {
   margin-bottom: 20px;
 }
 
+.recommend-grid {
+  margin-top: 10px;
+}
+
+.recommend-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.recommend-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 124px);
+  grid-auto-rows: 136px;
+  align-items: start;
+  justify-content: start;
+  gap: 12px;
+}
+
+.recommend-more {
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.recommend-more:hover {
+  color: var(--text);
+}
+
 .system-tile {
   width: 124px;
   height: 100%;
@@ -458,6 +489,7 @@ button.danger {
   border: 1px solid var(--border);
   text-align: center;
   transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+  min-width: 0;
 }
 
 .app-tile.drag-over {
@@ -481,6 +513,11 @@ button.danger {
   /* Match normal tile styling so it doesn’t stand out from others */
   border-color: var(--border);
   background: var(--card-bg);
+}
+
+.system-tile.active {
+  border-color: rgba(99, 102, 241, 0.55);
+  box-shadow: 0 10px 40px rgba(99, 102, 241, 0.3);
 }
 
 .app-add .app-icon {
@@ -541,6 +578,9 @@ button.danger {
 .app-name strong {
   font-size: 1rem;
   line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .app-name span {

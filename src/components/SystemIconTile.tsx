@@ -24,6 +24,13 @@ export function SystemIconTile({ title, onClick, className = '', icon, active }:
             <path d="m4 20 3.5-.8 11-11a1.7 1.7 0 0 0 0-2.5l-1.2-1.2a1.7 1.7 0 0 0-2.5 0l-11 11L3 18.5 4 20Z" />
             <path d="m14.8 5.2 4 4" />
           </svg>
+        ) : icon === 'app' ? (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+          </svg>
         ) : null}
       </div>
       <div class="system-copy">

@@ -188,6 +188,13 @@ export function App() {
         onToggleEdit={() => setIsEditMode((prev) => !prev)}
         onOpen={(url) => window.open(url, '_blank', 'noopener,noreferrer')}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onAddRecommended={(site) => {
+          addSite({
+            ...site,
+            id: crypto.randomUUID(),
+            addedAt: Date.now(),
+          });
+        }}
       />
 
       <AppGrid
