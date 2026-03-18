@@ -2,7 +2,6 @@ import type { Site } from '../utils/site';
 
 type Props = {
   site: Site;
-  isSelected?: boolean;
   isEditMode?: boolean;
   onClick: (event: MouseEvent) => void;
   onRemove?: () => void;
@@ -16,7 +15,6 @@ type Props = {
 
 export function AppTile({
   site,
-  isSelected,
   isEditMode,
   onClick,
   onRemove,
@@ -30,7 +28,7 @@ export function AppTile({
   return (
     <button
       type="button"
-      class={`app-tile ${isSelected ? 'active' : ''} ${className}`}
+      class={`app-tile ${className}`}
       draggable={draggable}
       onClick={onClick}
       onDragStart={onDragStart}

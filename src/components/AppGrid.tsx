@@ -4,9 +4,7 @@ import { AppTile } from './AppTile';
 
 type Props = {
   sites: Site[];
-  selectedId: string | null;
   isEditMode: boolean;
-  onSelect: (id: string) => void;
   onOpen: (url: string) => void;
   onRemove: (id: string) => void;
   onReorder: (fromId: string, toId: string) => void;
@@ -16,9 +14,7 @@ type Props = {
 
 export function AppGrid({
   sites,
-  selectedId,
   isEditMode,
-  onSelect,
   onOpen,
   onRemove,
   onReorder,
@@ -34,11 +30,9 @@ export function AppGrid({
         <AppTile
           key={site.id}
           site={site}
-          isSelected={site.id === selectedId}
           isEditMode={isEditMode}
           className={dragOverId === site.id ? 'drag-over' : ''}
           onClick={(event) => {
-            onSelect(site.id);
             if (isEditMode) {
               const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
               onTileEdit(site, rect);

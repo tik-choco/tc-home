@@ -16,35 +16,19 @@ export function useSites() {
     }
   });
 
-  const [selectedId, setSelectedId] = useState<string>(
-    () => sites[0]?.id ?? defaultSites[0].id,
-  );
-
-  const selectedSite = useMemo(
-    () => sites.find((site) => site.id === selectedId) ?? sites[0],
-    [selectedId, sites],
-  );
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(sites));
   }, [sites]);
 
-  useEffect(() => {
-    if (!sites.some((site) => site.id === selectedId) && sites[0]) {
-      setSelectedId(sites[0].id);
-    }
-  }, [selectedId, sites]);
-
   const addSite = (site: Site) => {
     setSites((current) => [site, ...current]);
-    setSelectedId(site.id);
   };
 
   const updateSite = (id: string, partial: Partial<Site>) => {
     setSites((current) =>
       current.map((site) => (site.id === id ? { ...site, ...partial } : site)),
     );
-    setSelectedId(id);
   };
 
   const removeSite = (id: string) => {
@@ -68,9 +52,6 @@ export function useSites() {
 
   return {
     sites,
-    selectedId,
-    selectedSite,
-    setSelectedId,
     addSite,
     updateSite,
     removeSite,

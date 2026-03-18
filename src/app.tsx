@@ -21,9 +21,6 @@ const systemApps: Site[] = [
 export function App() {
   const {
     sites,
-    selectedId,
-    selectedSite,
-    setSelectedId,
     addSite,
     updateSite,
     removeSite,
@@ -105,34 +102,6 @@ export function App() {
     setPopupStyle(null);
   }, [isEditMode, editingId, isCreating, sites]);
 
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (!sites.length || isEditMode) return;
-      const currentIndex = Math.max(
-        0,
-        sites.findIndex((site) => site.id === selectedId),
-      );
-
-      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
-        event.preventDefault();
-        const next = sites[(currentIndex + 1) % sites.length];
-        setSelectedId(next.id);
-      }
-
-      if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
-        event.preventDefault();
-        const prev = sites[(currentIndex - 1 + sites.length) % sites.length];
-        setSelectedId(prev.id);
-      }
-
-      if (event.key === 'Enter' && selectedSite) {
-        window.open(selectedSite.url, '_blank', 'noopener,noreferrer');
-      }
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [selectedId, selectedSite, sites, isEditMode, setSelectedId]);
 
   const saveSite = () => {
     const url = normalizeUrl(input);
@@ -223,9 +192,7 @@ export function App() {
 
       <AppGrid
         sites={sites}
-        selectedId={selectedId}
         isEditMode={isEditMode}
-        onSelect={setSelectedId}
         onOpen={(url) => window.open(url, '_blank', 'noopener,noreferrer')}
         onRemove={handleRemoveSite}
         onReorder={reorderSites}
