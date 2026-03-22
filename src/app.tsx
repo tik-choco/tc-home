@@ -57,7 +57,8 @@ export function App() {
     const maxWidth = 420;
     const availableWidth = window.innerWidth - margin * 2;
     const width = Math.min(maxWidth, Math.max(minWidth, availableWidth));
-    const left = Math.min(Math.max(margin, rect.left), window.innerWidth - width - margin);
+    const centeredLeft = rect.left + rect.width / 2 - width / 2;
+    const left = Math.min(Math.max(margin, centeredLeft), window.innerWidth - width - margin);
     const top = Math.min(rect.bottom + margin, window.innerHeight - margin);
     const maxHeight = Math.max(0, window.innerHeight - top - margin);
 
@@ -99,7 +100,6 @@ export function App() {
     setMessage('');
     setInput('');
     setTitleInput('');
-    setPopupStyle(null);
   }, [isEditMode, editingId, isCreating, sites]);
 
 
@@ -168,6 +168,11 @@ export function App() {
     setMessage('URL を入力して追加できます。');
   };
 
+  const handleCloseAddPanel = () => {
+    setIsCreating(false);
+    setEditingId(null);
+  };
+
   return (
     <main class="shell">
       <AddPanel
@@ -177,6 +182,7 @@ export function App() {
         title={titleInput}
         message={message}
         isFetching={isFetching}
+        onClose={handleCloseAddPanel}
         onUrlChange={setInput}
         onTitleChange={setTitleInput}
         onSave={saveSite}

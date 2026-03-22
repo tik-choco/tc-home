@@ -56,10 +56,71 @@ input {
   font: inherit;
 }
 
+@keyframes page-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes panel-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes tile-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes press-pop {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(0.97);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes press-pop-scale {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(0.97);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
 .shell {
   width: min(1440px, calc(100vw - 32px));
   margin: 0 auto;
   padding: 24px 0 40px;
+  animation: page-enter 420ms ease-out both;
 }
 
 .topbar {
@@ -101,33 +162,58 @@ input {
   backdrop-filter: blur(20px);
   box-shadow: 0 12px 34px var(--shadow);
   border-radius: 22px;
-  transform: translateY(-10px) scale(0.98);
+  transform: scale(0.98);
   opacity: 0;
-  transition: transform 200ms ease, opacity 200ms ease;
+  transition: transform 220ms ease, opacity 220ms ease;
   z-index: 20;
   pointer-events: none;
   overflow: auto;
 }
 
+.add-panel-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 19;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 180ms ease, visibility 0s linear 180ms;
+}
+
+.add-panel-backdrop.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 180ms ease;
+}
+
 .add-panel.open {
-  transform: translateY(0) scale(1);
+  transform: scale(1);
   opacity: 1;
   pointer-events: auto;
+  animation: panel-enter 220ms ease-out;
 }
 
 .modal-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
   z-index: 30;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 180ms ease, visibility 0s linear 180ms;
 }
 
 .modal-backdrop.open {
-  display: flex;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 180ms ease;
 }
 
 .modal-card {
@@ -140,6 +226,15 @@ input {
   backdrop-filter: blur(24px);
   border: 1px solid var(--border);
   box-shadow: 0 24px 80px var(--shadow);
+  transform: scale(0.98);
+  opacity: 0;
+  transition: transform 220ms ease, opacity 220ms ease;
+}
+
+.modal-backdrop.open .modal-card {
+  transform: scale(1);
+  opacity: 1;
+  animation: panel-enter 220ms ease-out;
 }
 
 .add-panel .add-card {
@@ -303,7 +398,7 @@ button {
 }
 
 button:hover {
-  transform: translateY(-1px);
+  transform: scale(1.01);
   background: var(--button-hover);
 }
 
@@ -439,6 +534,11 @@ button.danger {
   justify-items: center;
   align-content: start;
   border-radius: 999px;
+  transform-origin: center;
+}
+
+.system-tile:hover {
+  transform: scale(1.03);
 }
 
 .system-tile .app-icon {
@@ -495,6 +595,7 @@ button.danger {
   text-align: center;
   transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
   min-width: 0;
+  animation: tile-enter 320ms ease-out both;
 }
 
 .app-tile.drag-over {
@@ -503,9 +604,30 @@ button.danger {
 }
 
 .app-tile:hover {
-  transform: translateY(-2px);
+  transform: scale(1.03);
   border-color: rgba(148, 163, 184, 0.3);
   background: var(--card-hover);
+}
+
+.app-tile:active,
+.system-tile:active,
+.add-toggle:active,
+.settings-close:active,
+button.primary:active,
+button.danger:active {
+  animation: press-pop-scale 160ms ease-out;
+}
+
+.app-tile:active,
+.system-tile:active {
+  transform: scale(0.97);
+}
+
+.add-toggle:active,
+.settings-close:active,
+button.primary:active,
+button.danger:active {
+  transform: scale(0.98);
 }
 
 .app-add {
@@ -515,7 +637,6 @@ button.danger {
 }
 
 .app-tile.edit-toggle {
-  /* Match normal tile styling so it doesn’t stand out from others */
   border-color: var(--border);
   background: var(--card-bg);
 }
@@ -626,6 +747,27 @@ button.danger {
 .app-remove:hover {
   opacity: 1;
   transform: scale(1.08);
+}
+
+.system-grid > *,
+.recommend-list > * {
+  animation: tile-enter 320ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell,
+  .add-panel,
+  .add-panel.open,
+  .modal-backdrop,
+  .modal-backdrop.open,
+  .modal-card,
+  .modal-backdrop.open .modal-card,
+  .app-tile,
+  .system-grid > *,
+  .recommend-list > * {
+    animation: none;
+    transition: none;
+  }
 }
 
 .app-tile:hover .app-remove {
