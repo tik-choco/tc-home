@@ -3,9 +3,11 @@ import { makeTitle, normalizeUrl, safeHostname, Site } from './utils/site';
 import { useSites } from './hooks/useSites';
 import { useAutoTitle } from './hooks/useAutoTitle';
 import { useSettings } from './hooks/useSettings';
+import { useManualSync } from './hooks/useManualSync';
 import { AddPanel } from './components/AddPanel';
 import { AppGrid } from './components/AppGrid';
 import { SettingsPanel } from './components/SettingsPanel';
+import { SyncPanel } from './components/SyncPanel';
 import { SystemApps } from './components/SystemApps';
 
 const systemApps: Site[] = [
@@ -25,6 +27,7 @@ export function App() {
     updateSite,
     removeSite,
     reorderSites,
+    replaceSites,
   } = useSites();
 
   const [input, setInput] = useState('');
@@ -35,6 +38,7 @@ export function App() {
   const [isCreating, setIsCreating] = useState(false);
   const [popupStyle, setPopupStyle] = useState<Record<string, string | number> | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isSyncOpen, setIsSyncOpen] = useState(false);
 
   const { isFetching } = useAutoTitle({
     url: normalizeUrl(input),
@@ -48,8 +52,25 @@ export function App() {
     settings: { darkMode, backgroundUrl },
     setDarkMode,
     setBackgroundUrl,
+    replaceSettings,
     resetBackground,
   } = useSettings();
+
+  const {
+    roomId,
+    inviteUrl,
+    status: syncStatus,
+    notice: syncNotice,
+    error: syncError,
+    createRoom,
+    copyInviteLink,
+    disconnect,
+  } = useManualSync({
+    settings: { darkMode, backgroundUrl },
+    sites,
+    replaceSettings,
+    replaceSites,
+  });
 
   const computePopupStyle = (rect: DOMRect) => {
     const margin = 8;
@@ -173,6 +194,11 @@ export function App() {
     setEditingId(null);
   };
 
+  const handleOpenSync = () => {
+    setIsSyncOpen(true);
+    void copyInviteLink();
+  };
+
   return (
     <main class="shell">
       <AddPanel
@@ -194,6 +220,8 @@ export function App() {
         onToggleEdit={() => setIsEditMode((prev) => !prev)}
         onOpen={(url) => window.open(url, '_blank', 'noopener,noreferrer')}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenSync={handleOpenSync}
+        isSyncOpen={isSyncOpen}
         onAddRecommended={(site) => {
           addSite({
             ...site,
@@ -222,6 +250,19 @@ export function App() {
         onBackgroundUrlChange={setBackgroundUrl}
         onUploadBackground={setBackgroundUrl}
         onResetBackground={resetBackground}
+      />
+
+      <SyncPanel
+        open={isSyncOpen}
+        onClose={() => setIsSyncOpen(false)}
+        roomId={roomId}
+        inviteUrl={inviteUrl}
+        status={syncStatus}
+        notice={syncNotice}
+        error={syncError}
+        onCopyInvite={copyInviteLink}
+        onCreateRoom={createRoom}
+        onDisconnect={disconnect}
       />
     </main>
   );

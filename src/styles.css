@@ -231,6 +231,10 @@ input {
   transition: transform 220ms ease, opacity 220ms ease;
 }
 
+.sync-card {
+  width: min(620px, 100%);
+}
+
 .modal-backdrop.open .modal-card {
   transform: scale(1);
   opacity: 1;
@@ -335,7 +339,8 @@ input {
 }
 
 .settings-row input[type='url'],
-.settings-row input[type='file'] {
+.settings-row input[type='file'],
+.settings-row input[type='text'] {
   width: 100%;
   padding: 10px 12px;
   border-radius: 14px;
@@ -345,9 +350,46 @@ input {
 }
 
 .settings-row input[type='url']:focus,
-.settings-row input[type='file']:focus {
+.settings-row input[type='file']:focus,
+.settings-row input[type='text']:focus {
   border-color: rgba(129, 140, 248, 0.85);
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
+}
+
+.settings-row input[readonly] {
+  opacity: 0.9;
+}
+
+.sync-status-pill {
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border: 1px solid var(--border);
+  background: var(--button-bg);
+  color: var(--text);
+}
+
+.sync-status-pill.connected {
+  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.12);
+}
+
+.sync-status-pill.connecting {
+  border-color: rgba(99, 102, 241, 0.35);
+  background: rgba(99, 102, 241, 0.12);
+}
+
+.sync-status-pill.error {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.14);
+}
+
+.sync-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .add-card label,

@@ -12,6 +12,8 @@ type Props = {
   onToggleEdit: () => void;
   onOpen: (url: string) => void;
   onOpenSettings: () => void;
+  onOpenSync: () => void;
+  isSyncOpen: boolean;
   onAddRecommended: (site: Site) => void;
 };
 
@@ -21,6 +23,8 @@ export function SystemApps({
   onToggleEdit,
   onOpen,
   onOpenSettings,
+  onOpenSync,
+  isSyncOpen,
   onAddRecommended,
 }: Props) {
   const [recommended, setRecommended] = useState<Site[]>([]);
@@ -73,6 +77,14 @@ export function SystemApps({
           title="Settings"
           onClick={onOpenSettings}
           className="system-tile"
+        />
+
+        <SystemIconTile
+          icon="sync"
+          title="Sync"
+          onClick={onOpenSync}
+          className={`system-tile ${isSyncOpen ? 'active' : ''}`}
+          active={isSyncOpen}
         />
 
         <SystemIconTile

@@ -50,11 +50,16 @@ export function useSites() {
     });
   };
 
+  const replaceSites = (next: Site[]) => {
+    setSites(next);
+  };
+
   return {
     sites,
     addSite,
     updateSite,
     removeSite,
     reorderSites,
+    replaceSites,
   };
 }

@@ -2,7 +2,7 @@ type Props = {
   title: string;
   onClick: () => void;
   className?: string;
-  icon: 'settings' | 'edit' | 'app';
+  icon: 'settings' | 'edit' | 'app' | 'sync';
   active?: boolean;
 };
 
@@ -23,6 +23,13 @@ export function SystemIconTile({ title, onClick, className = '', icon, active }:
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="m4 20 3.5-.8 11-11a1.7 1.7 0 0 0 0-2.5l-1.2-1.2a1.7 1.7 0 0 0-2.5 0l-11 11L3 18.5 4 20Z" />
             <path d="m14.8 5.2 4 4" />
+          </svg>
+        ) : icon === 'sync' ? (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 12a8 8 0 0 1 13.3-5.9L19 8" />
+            <path d="M20 12a8 8 0 0 1-13.3 5.9L5 16" />
+            <path d="M19 4v4h-4" />
+            <path d="M5 20v-4h4" />
           </svg>
         ) : icon === 'app' ? (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">

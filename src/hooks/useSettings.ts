@@ -45,6 +45,10 @@ export function useSettings() {
     setSettings((prev) => ({ ...prev, backgroundUrl: value }));
   };
 
+  const replaceSettings = (next: Settings) => {
+    setSettings(next);
+  };
+
   const resetBackground = () => setBackgroundUrl('');
 
   const previewBackground = useMemo(() => settings.backgroundUrl, [settings.backgroundUrl]);
@@ -53,6 +57,7 @@ export function useSettings() {
     settings,
     setDarkMode,
     setBackgroundUrl,
+    replaceSettings,
     resetBackground,
     previewBackground,
   };
