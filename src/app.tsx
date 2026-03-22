@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useRef, useState, useMemo } from 'preact/hooks';
 import { makeTitle, normalizeUrl, safeHostname, Site } from './utils/site';
 import { useSites } from './hooks/useSites';
 import { useAutoTitle } from './hooks/useAutoTitle';
@@ -8,6 +8,7 @@ import { AddPanel } from './components/AddPanel';
 import { AppGrid } from './components/AppGrid';
 import { SettingsPanel } from './components/SettingsPanel';
 import { SyncPanel } from './components/SyncPanel';
+import { DiffConfirmPanel } from './components/DiffConfirmPanel';
 import { SystemApps } from './components/SystemApps';
 
 const systemApps: Site[] = [
@@ -39,7 +40,9 @@ export function App() {
   const [popupStyle, setPopupStyle] = useState<Record<string, string | number> | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSyncOpen, setIsSyncOpen] = useState(false);
+  const [isDiffConfirmOpen, setIsDiffConfirmOpen] = useState(false);
   const previousPeerCountRef = useRef(0);
+  const previousDiffRef = useRef(false);
 
   const { isFetching } = useAutoTitle({
     url: normalizeUrl(input),
@@ -50,27 +53,32 @@ export function App() {
   });
 
   const {
-    settings: { darkMode, backgroundUrl },
+    settings,
     setDarkMode,
     setBackgroundUrl,
     replaceSettings,
     resetBackground,
   } = useSettings();
 
+  const currentSettings = useMemo(() => ({
+    darkMode: settings.darkMode,
+    backgroundUrl: settings.backgroundUrl,
+  }), [settings.darkMode, settings.backgroundUrl]);
+
   const {
     roomId,
     status: syncStatus,
     error: syncError,
-    acceptRemoteSettings,
-    setAcceptRemoteSettings,
+    acceptRemoteState,
+    setAcceptRemoteState,
     peerCount,
-    hasRemoteSettingsDiff,
+    hasRemoteStateDiff,
     createRoom,
     startSync,
     copyInviteLink,
     disconnect,
   } = useManualSync({
-    settings: { darkMode, backgroundUrl },
+    settings: currentSettings,
     sites,
     replaceSettings,
     replaceSites,
@@ -127,21 +135,18 @@ export function App() {
     setTitleInput('');
   }, [isEditMode, editingId, isCreating, sites]);
 
+  // Sync パネルの自動表示は行わない
+  // 差分発生時に確認画面を出し、解決後は `SyncPanel` を保持する
   useEffect(() => {
-    const previousPeerCount = previousPeerCountRef.current;
-    previousPeerCountRef.current = peerCount;
-
-    if (syncStatus !== 'connected') {
+    if (syncStatus === 'connected' && hasRemoteStateDiff && !acceptRemoteState) {
+      setIsDiffConfirmOpen(true);
       return;
     }
 
-    if (peerCount <= 0 || previousPeerCount > 0 || isSyncOpen) {
-      return;
+    if (!hasRemoteStateDiff) {
+      setIsDiffConfirmOpen(false);
     }
-
-    setIsSyncOpen(true);
-  }, [isSyncOpen, peerCount, syncStatus]);
-
+  }, [syncStatus, hasRemoteStateDiff]);
 
   const saveSite = () => {
     const url = normalizeUrl(input);
@@ -262,12 +267,25 @@ export function App() {
       <SettingsPanel
         open={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        darkMode={darkMode}
-        backgroundUrl={backgroundUrl}
+        darkMode={currentSettings.darkMode}
+        backgroundUrl={currentSettings.backgroundUrl}
         onToggleDarkMode={setDarkMode}
         onBackgroundUrlChange={setBackgroundUrl}
         onUploadBackground={setBackgroundUrl}
         onResetBackground={resetBackground}
+      />
+
+      <DiffConfirmPanel
+        open={isDiffConfirmOpen}
+        onAccept={() => {
+          setAcceptRemoteState(true);
+          setIsDiffConfirmOpen(false);
+          setIsSyncOpen(false);
+        }}
+        onDisconnect={() => {
+          disconnect();
+          setIsDiffConfirmOpen(false);
+        }}
       />
 
       <SyncPanel
@@ -276,14 +294,11 @@ export function App() {
         roomId={roomId}
         status={syncStatus}
         error={syncError}
-        acceptRemoteSettings={acceptRemoteSettings}
         peerCount={peerCount}
-        hasRemoteSettingsDiff={hasRemoteSettingsDiff}
         onCopyInvite={copyInviteLink}
         onCreateRoom={createRoom}
         onStartSync={startSync}
         onDisconnect={disconnect}
-        onToggleAcceptRemoteSettings={setAcceptRemoteSettings}
       />
     </main>
   );

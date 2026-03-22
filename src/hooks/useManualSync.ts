@@ -34,7 +34,7 @@ type SyncMessage =
 const ROOM_QUERY_KEY = 'room';
 const ROOM_PREFIX = '^%70Xk*8^%c5V';
 const DEVICE_STORAGE_KEY = 'tc-home-device-id';
-const BROADCAST_GRACE_MS = 900;
+const BROADCAST_GRACE_MS = 500;
 const PRESENCE_EVENT_TYPES = new Set([2, 3, 4]);
 
 function readDeviceId() {
@@ -139,40 +139,47 @@ export function useManualSync({
   const [roomId, setRoomId] = useState(initialRoomId);
   const [status, setStatus] = useState<SyncStatus>('idle');
   const [error, setError] = useState('');
-  const [acceptRemoteSettingsValue, setAcceptRemoteSettingsValue] = useState(true);
+  const [acceptRemoteStateValue, setAcceptRemoteStateValue] = useState(false);
   const [peerCount, setPeerCount] = useState(0);
-  const [hasRemoteSettingsDiff, setHasRemoteSettingsDiff] = useState(false);
+  const [hasRemoteStateDiff, setHasRemoteStateDiff] = useState(false);
 
   const nodeRef = useRef<MistNode | null>(null);
   const settingsRef = useRef(settings);
+  settingsRef.current = settings;
   const sitesRef = useRef(sites);
+  sitesRef.current = sites;
   const latestAppliedStampRef = useRef(0);
   const lastSentSignatureRef = useRef('');
   const readyToBroadcastRef = useRef(false);
   const broadcastTimerRef = useRef<number | null>(null);
   const queuedSnapshotRef = useRef<SyncSnapshot | null>(null);
-  const lastRemoteSettingsRef = useRef<Settings | null>(null);
+  const lastRemoteSnapshotRef = useRef<SyncSnapshot | null>(null);
+
   const activeRoomIdRef = useRef('');
   const connectingRoomIdRef = useRef('');
   const connectSessionRef = useRef(0);
+  const acceptRemoteStateRef = useRef(acceptRemoteStateValue);
+  acceptRemoteStateRef.current = acceptRemoteStateValue;
+
+  const replaceSettingsRef = useRef(replaceSettings);
+  replaceSettingsRef.current = replaceSettings;
+  const replaceSitesRef = useRef(replaceSites);
+  replaceSitesRef.current = replaceSites;
+
+  const currentRoomIdRef = useRef(roomId);
+  currentRoomIdRef.current = roomId;
 
   useEffect(() => {
-    settingsRef.current = settings;
-  }, [settings]);
-
-  useEffect(() => {
-    sitesRef.current = sites;
-  }, [sites]);
-
-  useEffect(() => {
-    const remoteSettings = lastRemoteSettingsRef.current;
-    if (!remoteSettings || acceptRemoteSettingsValue) {
-      setHasRemoteSettingsDiff(false);
+    const remoteSnapshot = lastRemoteSnapshotRef.current;
+    if (!remoteSnapshot || acceptRemoteStateValue) {
+      setHasRemoteStateDiff(false);
       return;
     }
 
-    setHasRemoteSettingsDiff(settingsSignature(settings) !== settingsSignature(remoteSettings));
-  }, [acceptRemoteSettingsValue, settings]);
+    const currentSignature = serializeSnapshot(settings, sites);
+    const remoteSignature = serializeSnapshot(remoteSnapshot.settings, remoteSnapshot.sites);
+    setHasRemoteStateDiff(currentSignature !== remoteSignature);
+  }, [acceptRemoteStateValue, settings, sites]);
 
   useEffect(() => {
     const nextUrl = new URL(window.location.href);
@@ -240,8 +247,8 @@ export function useManualSync({
     clearBroadcastTimer();
     readyToBroadcastRef.current = false;
     queuedSnapshotRef.current = null;
-    lastRemoteSettingsRef.current = null;
-    setHasRemoteSettingsDiff(false);
+    lastRemoteSnapshotRef.current = null;
+    setHasRemoteStateDiff(false);
     activeRoomIdRef.current = '';
     connectingRoomIdRef.current = '';
     setPeerCount(0);
@@ -292,14 +299,23 @@ export function useManualSync({
     });
   }, [deviceId, sendMessage]);
 
-  const setAcceptRemoteSettings = useCallback((next: boolean) => {
-    setAcceptRemoteSettingsValue((current) => {
-      if (next && !current && roomId && status === 'connected') {
-        sendMessage({
-          type: 'accept-settings',
-          roomId,
-          from: deviceId,
-        });
+  const setAcceptRemoteState = useCallback((next: boolean) => {
+    acceptRemoteStateRef.current = next;
+    setAcceptRemoteStateValue((current) => {
+      if (next && !current) {
+        if (lastRemoteSnapshotRef.current) {
+          replaceSettingsRef.current(lastRemoteSnapshotRef.current.settings);
+          replaceSitesRef.current(lastRemoteSnapshotRef.current.sites);
+          setHasRemoteStateDiff(false);
+        }
+
+        if (roomId && status === 'connected') {
+          sendMessage({
+            type: 'accept-settings',
+            roomId,
+            from: deviceId,
+          });
+        }
       }
 
       return next;
@@ -316,7 +332,8 @@ export function useManualSync({
         return;
       }
 
-      if (!parsed || parsed.roomId !== roomId) return;
+      const activeRoomId = currentRoomIdRef.current;
+      if (!parsed || parsed.roomId !== activeRoomId) return;
       if (parsed.from === deviceId) return;
 
       if (parsed.type === 'request-snapshot') {
@@ -330,6 +347,7 @@ export function useManualSync({
 
       if (parsed.type === 'accept-settings') {
         sendCurrentSnapshot();
+        setAcceptRemoteStateValue(true);
         return;
       }
 
@@ -339,24 +357,33 @@ export function useManualSync({
       const signature = serializeSnapshot(parsed.snapshot.settings, parsed.snapshot.sites);
       if (parsed.snapshot.updatedAt < latestAppliedStampRef.current) return;
 
-      lastRemoteSettingsRef.current = parsed.snapshot.settings;
-      const nextSettingsDiff =
-        settingsSignature(settingsRef.current) !== settingsSignature(parsed.snapshot.settings);
+      lastRemoteSnapshotRef.current = parsed.snapshot;
+      const currentSignature = serializeSnapshot(settingsRef.current, sitesRef.current);
+      const nextStateDiff = currentSignature !== signature;
 
       latestAppliedStampRef.current = parsed.snapshot.updatedAt;
-      lastSentSignatureRef.current = signature;
-      queuedSnapshotRef.current = null;
+
+      // 受信したスナップショットが自分の状態と完全に一致する場合、
+      // または相手の状態を受け入れる場合は、自分の送信予定をキャンセルする
+      if (!nextStateDiff || acceptRemoteStateRef.current) {
+        queuedSnapshotRef.current = null;
+      }
+
       readyToBroadcastRef.current = true;
       setStatus('connected');
-      if (acceptRemoteSettingsValue) {
-        replaceSettings(parsed.snapshot.settings);
-        setHasRemoteSettingsDiff(false);
+      if (acceptRemoteStateRef.current) {
+        replaceSettingsRef.current(parsed.snapshot.settings);
+        replaceSitesRef.current(parsed.snapshot.sites);
+        setHasRemoteStateDiff(false);
       } else {
-        setHasRemoteSettingsDiff(nextSettingsDiff);
+        setHasRemoteStateDiff(nextStateDiff);
+        // 一致している（差異がない）場合は、自動的に承諾済みとしてペアリングする
+        if (!nextStateDiff) {
+          setAcceptRemoteStateValue(true);
+        }
       }
-      replaceSites(parsed.snapshot.sites);
     },
-    [acceptRemoteSettingsValue, deviceId, readyToBroadcastRef, replaceSettings, replaceSites, roomId, sendCurrentSnapshot],
+    [deviceId, readyToBroadcastRef, sendCurrentSnapshot],
   );
 
     const connectToRoom = useCallback(async (targetRoomId: string) => {
@@ -370,6 +397,7 @@ export function useManualSync({
 
       stopCurrentConnection();
       readyToBroadcastRef.current = false;
+      setAcceptRemoteStateValue(false);
       setStatus('connecting');
       setError('');
 
@@ -392,6 +420,9 @@ export function useManualSync({
 
           if (PRESENCE_EVENT_TYPES.has(eventType)) {
             refreshPeerCount(node);
+            if (eventType === 2) {
+              sendCurrentSnapshot();
+            }
           }
         });
 
@@ -399,13 +430,19 @@ export function useManualSync({
         activeRoomIdRef.current = normalizedRoomId;
         setStatus('connected');
         refreshPeerCount(node);
-        sendMessage({
-          type: 'request-snapshot',
-          roomId: normalizedRoomId,
-          from: deviceId,
-        });
+
+        // 接続直後はルームへの登録が完了するまで極短時間待ってからリクエストを送る
+        window.setTimeout(() => {
+          if (sessionId !== connectSessionRef.current) return;
+          sendMessage({
+            type: 'request-snapshot',
+            roomId: normalizedRoomId,
+            from: deviceId,
+          });
+        }, 100);
 
         clearBroadcastTimer();
+        queuedSnapshotRef.current = makeSnapshot();
         broadcastTimerRef.current = window.setTimeout(() => {
           if (sessionId !== connectSessionRef.current) return;
           readyToBroadcastRef.current = true;
@@ -497,6 +534,7 @@ export function useManualSync({
   const disconnect = useCallback(() => {
     connectSessionRef.current += 1;
     stopCurrentConnection();
+    setRoomId('');
     queuedSnapshotRef.current = null;
     lastSentSignatureRef.current = '';
     latestAppliedStampRef.current = 0;
@@ -509,10 +547,10 @@ export function useManualSync({
     inviteUrl,
     status,
     error,
-    acceptRemoteSettings: acceptRemoteSettingsValue,
-    setAcceptRemoteSettings,
+    acceptRemoteState: acceptRemoteStateValue,
+    setAcceptRemoteState,
     peerCount,
-    hasRemoteSettingsDiff,
+    hasRemoteStateDiff,
     createRoom,
     startSync,
     copyInviteLink,

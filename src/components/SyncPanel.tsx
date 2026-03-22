@@ -4,14 +4,11 @@ type Props = {
   roomId: string;
   status: 'idle' | 'connecting' | 'connected' | 'error';
   error: string;
-  acceptRemoteSettings: boolean;
   peerCount: number;
-  hasRemoteSettingsDiff: boolean;
   onCopyInvite: () => Promise<string> | string;
   onCreateRoom: () => string;
   onStartSync: () => string;
   onDisconnect: () => void;
-  onToggleAcceptRemoteSettings: (next: boolean) => void;
 };
 
 function statusLabel(status: Props['status']) {
@@ -33,17 +30,13 @@ export function SyncPanel({
   roomId,
   status,
   error,
-  acceptRemoteSettings,
   peerCount,
-  hasRemoteSettingsDiff,
   onCopyInvite,
   onCreateRoom,
   onStartSync,
   onDisconnect,
-  onToggleAcceptRemoteSettings,
 }: Props) {
   const isActive = status === 'connecting' || status === 'connected';
-  const shouldShowAcceptButton = peerCount > 0 && hasRemoteSettingsDiff;
 
   return (
     <div class={`modal-backdrop ${open ? 'open' : ''}`} onClick={onClose}>
@@ -51,7 +44,6 @@ export function SyncPanel({
         <div class="settings-header">
           <div>
             <h2>Sync</h2>
-            <p class="subtle">roomId を含むリンクを手動で共有します</p>
           </div>
 
           <div class="sync-header-right">
@@ -77,10 +69,10 @@ export function SyncPanel({
                 readOnly
               />
               <button type="button" onClick={onCreateRoom}>
-                新しいルームを発行
+                New Room
               </button>
               <button type="button" class="primary" onClick={onCopyInvite}>
-                リンクをコピー
+                Copy
               </button>
             </div>
           </div>
@@ -96,21 +88,6 @@ export function SyncPanel({
               </button>
             )}
           </div>
-
-          {shouldShowAcceptButton ? (
-            <div class="settings-row">
-              <div class="sync-actions">
-                <button
-                  type="button"
-                  class={`sync-accept-button ${acceptRemoteSettings ? 'enabled' : 'disabled'}`}
-                  aria-pressed={acceptRemoteSettings}
-                  onClick={() => onToggleAcceptRemoteSettings(!acceptRemoteSettings)}
-                >
-                  {acceptRemoteSettings ? '受け入れる' : '受け入れない'}
-                </button>
-              </div>
-            </div>
-          ) : null}
 
           {error ? <p class="hint">{error}</p> : null}
         </div>
