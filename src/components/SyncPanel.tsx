@@ -79,7 +79,7 @@ export function SyncPanel({
 
           <div class="sync-actions">
             {isActive ? (
-              <button type="button" class="danger" onClick={onDisconnect} disabled={!roomId}>
+              <button type="button" class="danger" onClick={onDisconnect}>
                 同期を終了
               </button>
             ) : (

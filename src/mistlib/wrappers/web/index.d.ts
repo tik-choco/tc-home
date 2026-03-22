@@ -32,6 +32,7 @@ export interface LocalTrackOptions {
 
 export class MistNode {
     constructor(nodeId: string, signalingUrl?: string);
+    initialized: boolean;
 
     init(): Promise<void>;
     onEvent(handler: (eventType: number, fromId: string, payload: unknown) => void): void;

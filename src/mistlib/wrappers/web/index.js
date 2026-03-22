@@ -48,38 +48,49 @@ export class MistNode {
         this.initialized = false;
         this._onEvent = null;
         this._onMediaEvent = null;
+        this._initPromise = null;
         active_nodes.add(this);
     }
 
     async init() {
         if (this.initialized) return;
-        await init();
-        mist_init(this.nodeId, this.signalingUrl);
+        if (this._initPromise) return this._initPromise;
 
-        if (!callbacks_registered) {
-            mist_register_event_callback((eventType, fromId, payload) => {
-                for (const node of active_nodes) {
-                    if (node._onEvent) {
-                        node._onEvent(eventType, fromId, payload);
-                    }
+        this._initPromise = (async () => {
+            try {
+                await init();
+                mist_init(this.nodeId, this.signalingUrl);
+
+                if (!callbacks_registered) {
+                    mist_register_event_callback((eventType, fromId, payload) => {
+                        for (const node of active_nodes) {
+                            if (node._onEvent) {
+                                node._onEvent(eventType, fromId, payload);
+                            }
+                        }
+                    });
+                    mist_register_media_event_callback((eventType, fromId, trackId, kind, track, stream) => {
+                        for (const node of active_nodes) {
+                            if (node._onMediaEvent) {
+                                node._onMediaEvent(eventType, {
+                                    fromId,
+                                    trackId,
+                                    kind,
+                                    track,
+                                    stream: stream ?? undefined,
+                                });
+                            }
+                        }
+                    });
+                    callbacks_registered = true;
                 }
-            });
-            mist_register_media_event_callback((eventType, fromId, trackId, kind, track, stream) => {
-                for (const node of active_nodes) {
-                    if (node._onMediaEvent) {
-                        node._onMediaEvent(eventType, {
-                            fromId,
-                            trackId,
-                            kind,
-                            track,
-                            stream: stream ?? undefined,
-                        });
-                    }
-                }
-            });
-            callbacks_registered = true;
-        }
-        this.initialized = true;
+                this.initialized = true;
+            } finally {
+                this._initPromise = null;
+            }
+        })();
+
+        return this._initPromise;
     }
 
     onEvent(handler) {

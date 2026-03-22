@@ -158,8 +158,6 @@ export function useManualSync({
   const replaceSitesRef = useRef(replaceSites);
   replaceSitesRef.current = replaceSites;
 
-  const currentRoomIdRef = useRef(roomId);
-  currentRoomIdRef.current = roomId;
 
   useEffect(() => {
     const remoteSnapshot = lastRemoteSnapshotRef.current;
@@ -175,14 +173,13 @@ export function useManualSync({
 
   useEffect(() => {
     const nextUrl = new URL(window.location.href);
+    const shouldShowInUrl = roomId && (status === 'connected' || status === 'connecting');
 
-    if (!roomId) {
+    if (!shouldShowInUrl) {
       if (nextUrl.searchParams.has(ROOM_QUERY_KEY)) {
         nextUrl.searchParams.delete(ROOM_QUERY_KEY);
         window.history.replaceState({}, '', nextUrl.toString());
       }
-      activeRoomIdRef.current = '';
-      connectingRoomIdRef.current = '';
       return;
     }
 
@@ -190,7 +187,7 @@ export function useManualSync({
       nextUrl.searchParams.set(ROOM_QUERY_KEY, roomId);
       window.history.replaceState({}, '', nextUrl.toString());
     }
-  }, [roomId]);
+  }, [roomId, status]);
 
   const clearBroadcastTimer = useCallback(() => {
     if (broadcastTimerRef.current !== null) {
@@ -252,9 +249,11 @@ export function useManualSync({
     setPeerCount(0);
 
     const currentNode = nodeRef.current;
+    nodeRef.current = null;
     if (currentNode) {
-      safeLeaveRoom(currentNode);
-      nodeRef.current = null;
+      setTimeout(() => {
+        safeLeaveRoom(currentNode);
+      }, 0);
     }
   }, [clearBroadcastTimer, safeLeaveRoom]);
 
@@ -330,7 +329,7 @@ export function useManualSync({
         return;
       }
 
-      const activeRoomId = currentRoomIdRef.current;
+      const activeRoomId = activeRoomIdRef.current;
       if (!parsed || parsed.roomId !== activeRoomId) return;
       if (parsed.from === deviceId) return;
 
@@ -423,10 +422,12 @@ export function useManualSync({
         }
       });
 
-      node.joinRoom(buildTransportRoomId(normalizedRoomId));
-      activeRoomIdRef.current = normalizedRoomId;
-      setStatus('connected');
-      refreshPeerCount(node);
+      if (sessionId === connectSessionRef.current) {
+        node.joinRoom(buildTransportRoomId(normalizedRoomId));
+        activeRoomIdRef.current = normalizedRoomId;
+        setStatus('connected');
+        refreshPeerCount(node);
+      }
 
       // 接続直後はルームへの登録が完了するまで極短時間待ってからリクエストを送る
       window.setTimeout(() => {
@@ -458,8 +459,10 @@ export function useManualSync({
     }
   }, [clearBroadcastTimer, deviceId, flushQueuedSnapshot, handleIncomingMessage, refreshPeerCount, stopCurrentConnection, sendMessage, makeSnapshot]);
 
+  const initialConnectRef = useRef(false);
   useEffect(() => {
-    if (!initialRoomId) return;
+    if (!initialRoomId || initialConnectRef.current) return;
+    initialConnectRef.current = true;
     void connectToRoom(initialRoomId);
   }, [connectToRoom, initialRoomId]);
 
@@ -530,12 +533,11 @@ export function useManualSync({
 
   const disconnect = useCallback(() => {
     connectSessionRef.current += 1;
+    setStatus('idle');
     stopCurrentConnection();
-    setRoomId('');
     queuedSnapshotRef.current = null;
     lastSentSignatureRef.current = '';
     latestAppliedStampRef.current = 0;
-    setStatus('idle');
     setError('');
   }, [stopCurrentConnection]);
 
