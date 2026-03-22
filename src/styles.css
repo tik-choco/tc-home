@@ -954,3 +954,28 @@ button.danger:active {
   color: var(--text);
   text-decoration: underline;
 }
+.qr-card {
+  width: min(420px, 95vw);
+  text-align: center;
+}
+
+.qr-container {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  background: white;
+  border-radius: 16px;
+  margin: 16px 0;
+}
+
+.qr-container canvas {
+  display: block;
+  max-width: 100%;
+  height: auto !important;
+}
+
+.qr-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}

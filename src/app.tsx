@@ -9,6 +9,7 @@ import { AppGrid } from './components/AppGrid';
 import { SettingsPanel } from './components/SettingsPanel';
 import { SyncPanel } from './components/SyncPanel';
 import { DiffConfirmPanel } from './components/DiffConfirmPanel';
+import { QRPanel } from './components/QRPanel';
 import { SystemApps } from './components/SystemApps';
 
 const systemApps: Site[] = [
@@ -40,6 +41,7 @@ export function App() {
   const [popupStyle, setPopupStyle] = useState<Record<string, string | number> | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSyncOpen, setIsSyncOpen] = useState(false);
+  const [isQrOpen, setIsQrOpen] = useState(false);
   const [isDiffConfirmOpen, setIsDiffConfirmOpen] = useState(false);
   const previousPeerCountRef = useRef(0);
   const previousDiffRef = useRef(false);
@@ -68,6 +70,7 @@ export function App() {
 
   const {
     roomId,
+    inviteUrl,
     status: syncStatus,
     error: syncError,
     acceptRemoteState,
@@ -296,9 +299,15 @@ export function App() {
         error={syncError}
         peerCount={peerCount}
         onCopyInvite={copyInviteLink}
-        onCreateRoom={createRoom}
         onStartSync={startSync}
+        onShowQR={() => setIsQrOpen(true)}
         onDisconnect={disconnect}
+      />
+
+      <QRPanel
+        open={isQrOpen}
+        onClose={() => setIsQrOpen(false)}
+        url={inviteUrl}
       />
     </main>
   );

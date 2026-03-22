@@ -6,8 +6,8 @@ type Props = {
   error: string;
   peerCount: number;
   onCopyInvite: () => Promise<string> | string;
-  onCreateRoom: () => string;
   onStartSync: () => string;
+  onShowQR: () => void;
   onDisconnect: () => void;
 };
 
@@ -32,8 +32,8 @@ export function SyncPanel({
   error,
   peerCount,
   onCopyInvite,
-  onCreateRoom,
   onStartSync,
+  onShowQR,
   onDisconnect,
 }: Props) {
   const isActive = status === 'connecting' || status === 'connected';
@@ -68,12 +68,14 @@ export function SyncPanel({
                 value={roomId || '未作成'}
                 readOnly
               />
-              <button type="button" onClick={onCreateRoom}>
-                New Room
-              </button>
               <button type="button" class="primary" onClick={onCopyInvite}>
-                Copy
+                {roomId ? 'Copy' : 'Invite'}
               </button>
+              {roomId && (
+                <button type="button" onClick={onShowQR} aria-label="QRコードを表示">
+                  QR
+                </button>
+              )}
             </div>
           </div>
 
