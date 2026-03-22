@@ -412,7 +412,6 @@ export function useManualSync({
     lastSentSignatureRef.current = '';
     latestAppliedStampRef.current = 0;
     setSyncRequested(false);
-    setRoomId('');
     setStatus('idle');
     setError('');
     setNotice('同期を終了しました。');
