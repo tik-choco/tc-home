@@ -92,9 +92,11 @@ export function useManualSync({
   replaceSites: (next: Site[]) => void;
 }) {
   const deviceId = useMemo(() => readDeviceId(), []);
-  const [roomId, setRoomId] = useState(readInitialRoomId);
-  const [status, setStatus] = useState<SyncStatus>(roomId ? 'connecting' : 'idle');
-  const [notice, setNotice] = useState('同期リンクを作成できます。');
+  const initialRoomId = useMemo(() => readInitialRoomId(), []);
+  const [roomId, setRoomId] = useState(initialRoomId);
+  const [syncRequested, setSyncRequested] = useState(Boolean(initialRoomId));
+  const [status, setStatus] = useState<SyncStatus>('idle');
+  const [notice, setNotice] = useState(initialRoomId ? '同期ルームに接続しています。' : '同期リンクを作成できます。');
   const [error, setError] = useState('');
 
   const nodeRef = useRef<MistNode | null>(null);
@@ -255,17 +257,19 @@ export function useManualSync({
   );
 
   useEffect(() => {
-    if (!roomId) {
+    if (!roomId || !syncRequested) {
       clearBroadcastTimer();
       readyToBroadcastRef.current = false;
       setStatus('idle');
       setError('');
-      setNotice('同期リンクを作成できます。');
+      setNotice(roomId ? '同期を開始できます。' : '同期リンクを作成できます。');
       const node = nodeRef.current;
       if (node) {
         node.leaveRoom();
         nodeRef.current = null;
       }
+      activeRoomIdRef.current = '';
+      connectingRoomIdRef.current = '';
       return;
     }
 
@@ -371,6 +375,19 @@ export function useManualSync({
     return nextRoomId;
   }, []);
 
+  const startSync = useCallback(() => {
+    if (!roomId) {
+      const nextRoomId = createRoom();
+      setSyncRequested(true);
+      setNotice('同期ルームに接続しています。');
+      return nextRoomId;
+    }
+
+    setSyncRequested(true);
+    setNotice('同期ルームに接続しています。');
+    return roomId;
+  }, [createRoom, roomId]);
+
   const copyInviteLink = useCallback(async () => {
     const nextRoomId = roomId || createRoom();
     const inviteUrl = buildInviteUrl(nextRoomId);
@@ -394,6 +411,7 @@ export function useManualSync({
     queuedSnapshotRef.current = null;
     lastSentSignatureRef.current = '';
     latestAppliedStampRef.current = 0;
+    setSyncRequested(false);
     setRoomId('');
     setStatus('idle');
     setError('');
@@ -407,6 +425,7 @@ export function useManualSync({
     error,
     notice,
     createRoom,
+    startSync,
     copyInviteLink,
     disconnect,
   };

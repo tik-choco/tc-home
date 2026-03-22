@@ -392,6 +392,25 @@ input {
   gap: 10px;
 }
 
+.sync-room-row {
+  gap: 10px;
+}
+
+.sync-inline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.sync-inline input {
+  min-width: 0;
+}
+
+.sync-inline button {
+  min-width: 0;
+}
+
 .add-card label,
 .section-head span,
 .subtle,
@@ -845,5 +864,13 @@ button.danger:active {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
+  }
+
+  .sync-inline {
+    grid-template-columns: 1fr;
+  }
+
+  .sync-inline button {
+    width: 100%;
   }
 }

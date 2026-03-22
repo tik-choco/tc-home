@@ -58,11 +58,11 @@ export function App() {
 
   const {
     roomId,
-    inviteUrl,
     status: syncStatus,
     notice: syncNotice,
     error: syncError,
     createRoom,
+    startSync,
     copyInviteLink,
     disconnect,
   } = useManualSync({
@@ -196,7 +196,6 @@ export function App() {
 
   const handleOpenSync = () => {
     setIsSyncOpen(true);
-    void copyInviteLink();
   };
 
   return (
@@ -256,12 +255,12 @@ export function App() {
         open={isSyncOpen}
         onClose={() => setIsSyncOpen(false)}
         roomId={roomId}
-        inviteUrl={inviteUrl}
         status={syncStatus}
         notice={syncNotice}
         error={syncError}
         onCopyInvite={copyInviteLink}
         onCreateRoom={createRoom}
+        onStartSync={startSync}
         onDisconnect={disconnect}
       />
     </main>
