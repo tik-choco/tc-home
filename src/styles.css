@@ -933,3 +933,24 @@ button.danger:active {
     width: 100%;
   }
 }
+.sync-footer {
+  margin-top: 10px;
+  padding-top: 16px;
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid var(--border);
+}
+
+.sync-footer a {
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-decoration: none;
+  opacity: 0.6;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.sync-footer a:hover {
+  opacity: 1;
+  color: var(--text);
+  text-decoration: underline;
+}

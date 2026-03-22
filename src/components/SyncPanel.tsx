@@ -91,6 +91,12 @@ export function SyncPanel({
 
           {error ? <p class="hint">{error}</p> : null}
         </div>
+
+        <div class="sync-footer">
+          <a href="https://github.com/tik-choco-lab/mistlib" target="_blank" rel="noopener noreferrer">
+            Powered by mistlib
+          </a>
+        </div>
       </div>
     </div>
   );
