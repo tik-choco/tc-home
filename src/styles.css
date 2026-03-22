@@ -278,6 +278,14 @@ input {
   gap: 14px;
 }
 
+.sync-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .settings-header h2 {
   margin: 0;
   font-size: 1.2rem;
@@ -384,6 +392,18 @@ input {
 .sync-status-pill.error {
   border-color: rgba(239, 68, 68, 0.35);
   background: rgba(239, 68, 68, 0.14);
+}
+
+.sync-count {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--button-bg);
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .sync-actions {

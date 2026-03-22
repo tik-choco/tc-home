@@ -61,6 +61,9 @@ export function App() {
     status: syncStatus,
     notice: syncNotice,
     error: syncError,
+    acceptRemoteSettings,
+    setAcceptRemoteSettings,
+    peerCount,
     createRoom,
     startSync,
     copyInviteLink,
@@ -258,10 +261,13 @@ export function App() {
         status={syncStatus}
         notice={syncNotice}
         error={syncError}
+        acceptRemoteSettings={acceptRemoteSettings}
+        peerCount={peerCount}
         onCopyInvite={copyInviteLink}
         onCreateRoom={createRoom}
         onStartSync={startSync}
         onDisconnect={disconnect}
+        onToggleAcceptRemoteSettings={setAcceptRemoteSettings}
       />
     </main>
   );

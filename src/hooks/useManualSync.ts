@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { DELIVERY_RELIABLE, MistNode } from '../mistlib/wrappers/web/index.js';
+import { DELIVERY_RELIABLE, EVENT_RAW, MistNode } from '../mistlib/wrappers/web/index.js';
 import type { Site } from '../utils/site';
 import type { Settings } from './useSettings';
 
@@ -27,8 +27,10 @@ type SyncMessage =
     };
 
 const ROOM_QUERY_KEY = 'room';
+const ROOM_PREFIX = '^%70Xk*8^%c5V';
 const DEVICE_STORAGE_KEY = 'tc-home-device-id';
 const BROADCAST_GRACE_MS = 900;
+const PRESENCE_EVENT_TYPES = new Set([2, 3, 4]);
 
 function readDeviceId() {
   const stored = localStorage.getItem(DEVICE_STORAGE_KEY);
@@ -51,12 +53,44 @@ function buildInviteUrl(roomId: string) {
   return url.toString();
 }
 
+function buildTransportRoomId(roomId: string) {
+  return `${ROOM_PREFIX}${roomId}`;
+}
+
 function serializeSnapshot(settings: Settings, sites: Site[]) {
   return JSON.stringify({
     version: 1,
     settings,
     sites,
   });
+}
+
+function readPeerCount(node: MistNode, selfId: string) {
+  const allNodes = node.getAllNodes();
+  if (!Array.isArray(allNodes) || allNodes.length === 0) return 0;
+
+  const isSelfNode = (value: unknown) => {
+    if (!value || typeof value !== 'object') return false;
+
+    const candidate = value as {
+      id?: unknown;
+      nodeId?: unknown;
+      deviceId?: unknown;
+      fromId?: unknown;
+    };
+
+    return [candidate.id, candidate.nodeId, candidate.deviceId, candidate.fromId].some(
+      (entry) => entry === selfId,
+    );
+  };
+
+  const peers = allNodes.filter((entry) => !isSelfNode(entry));
+
+  if (peers.length > 0) {
+    return peers.length;
+  }
+
+  return Math.max(0, allNodes.length - 1);
 }
 
 async function copyToClipboard(text: string) {
@@ -98,6 +132,8 @@ export function useManualSync({
   const [status, setStatus] = useState<SyncStatus>('idle');
   const [notice, setNotice] = useState(initialRoomId ? '同期ルームに接続しています。' : '同期リンクを作成できます。');
   const [error, setError] = useState('');
+  const [acceptRemoteSettings, setAcceptRemoteSettings] = useState(true);
+  const [peerCount, setPeerCount] = useState(0);
 
   const nodeRef = useRef<MistNode | null>(null);
   const settingsRef = useRef(settings);
@@ -177,6 +213,10 @@ export function useManualSync({
     node.sendMessage('', payload, DELIVERY_RELIABLE);
   }, []);
 
+  const refreshPeerCount = useCallback((node: MistNode) => {
+    setPeerCount(readPeerCount(node, deviceId));
+  }, [deviceId]);
+
   const sendCurrentSnapshot = useCallback(() => {
     if (!roomId) return;
 
@@ -249,11 +289,13 @@ export function useManualSync({
       queuedSnapshotRef.current = null;
       readyToBroadcastRef.current = true;
       setStatus('connected');
-      setNotice('同期データを受信しました。');
-      replaceSettings(parsed.snapshot.settings);
+      setNotice(acceptRemoteSettings ? '同期データを受信しました。' : '同期データを受信しました。設定は保持しています。');
+      if (acceptRemoteSettings) {
+        replaceSettings(parsed.snapshot.settings);
+      }
       replaceSites(parsed.snapshot.sites);
     },
-    [deviceId, readyToBroadcastRef, replaceSettings, replaceSites, roomId, sendCurrentSnapshot],
+    [acceptRemoteSettings, deviceId, readyToBroadcastRef, replaceSettings, replaceSites, roomId, sendCurrentSnapshot],
   );
 
   useEffect(() => {
@@ -300,14 +342,22 @@ export function useManualSync({
           return;
         }
 
-        node.onRawMessage((fromId, payload) => {
-          handleIncomingMessage(fromId, payload);
+        node.onEvent((eventType, fromId, payload) => {
+          if (eventType === EVENT_RAW) {
+            handleIncomingMessage(fromId, payload as Uint8Array);
+            return;
+          }
+
+          if (PRESENCE_EVENT_TYPES.has(eventType)) {
+            refreshPeerCount(node);
+          }
         });
 
-        node.joinRoom(roomId);
-  activeRoomIdRef.current = roomId;
+        node.joinRoom(buildTransportRoomId(roomId));
+        activeRoomIdRef.current = roomId;
         setStatus('connected');
         setNotice('同期ルームに接続しました。');
+        refreshPeerCount(node);
         sendMessage({
           type: 'request-snapshot',
           roomId,
@@ -333,6 +383,7 @@ export function useManualSync({
       clearBroadcastTimer();
       readyToBroadcastRef.current = false;
       connectingRoomIdRef.current = '';
+      setPeerCount(0);
       const currentNode = nodeRef.current;
       if (currentNode) {
         safeLeaveRoom(currentNode);
@@ -411,6 +462,7 @@ export function useManualSync({
     queuedSnapshotRef.current = null;
     lastSentSignatureRef.current = '';
     latestAppliedStampRef.current = 0;
+    setPeerCount(0);
     setSyncRequested(false);
     setStatus('idle');
     setError('');
@@ -423,6 +475,9 @@ export function useManualSync({
     status,
     error,
     notice,
+    acceptRemoteSettings,
+    setAcceptRemoteSettings,
+    peerCount,
     createRoom,
     startSync,
     copyInviteLink,

@@ -5,10 +5,13 @@ type Props = {
   status: 'idle' | 'connecting' | 'connected' | 'error';
   notice: string;
   error: string;
+  acceptRemoteSettings: boolean;
+  peerCount: number;
   onCopyInvite: () => Promise<string> | string;
   onCreateRoom: () => string;
   onStartSync: () => string;
   onDisconnect: () => void;
+  onToggleAcceptRemoteSettings: (next: boolean) => void;
 };
 
 function statusLabel(status: Props['status']) {
@@ -31,12 +34,16 @@ export function SyncPanel({
   status,
   notice,
   error,
+  acceptRemoteSettings,
+  peerCount,
   onCopyInvite,
   onCreateRoom,
   onStartSync,
   onDisconnect,
+  onToggleAcceptRemoteSettings,
 }: Props) {
   const isActive = status === 'connecting' || status === 'connected';
+  const hasPeer = peerCount > 0;
 
   return (
     <div class={`modal-backdrop ${open ? 'open' : ''}`} onClick={onClose}>
@@ -47,8 +54,13 @@ export function SyncPanel({
             <p class="subtle">roomId を含むリンクを手動で共有します</p>
           </div>
 
-          <div class={`sync-status-pill ${status}`} aria-label={statusLabel(status)}>
-            {statusLabel(status)}
+          <div class="sync-header-right">
+            <div class={`sync-status-pill ${status}`} aria-label={statusLabel(status)}>
+              {statusLabel(status)}
+            </div>
+            <div class="sync-count" aria-label={`接続中の人数 ${peerCount} 人`}>
+              {peerCount} 人
+            </div>
           </div>
         </div>
 
@@ -84,6 +96,25 @@ export function SyncPanel({
               </button>
             )}
           </div>
+
+          {hasPeer ? (
+            <div class="settings-row">
+              <label class="settings-label toggle">
+                <input
+                  type="checkbox"
+                  checked={acceptRemoteSettings}
+                  onInput={(event) =>
+                    onToggleAcceptRemoteSettings((event.currentTarget as HTMLInputElement).checked)
+                  }
+                />
+                <span class="toggle-switch" aria-hidden="true" />
+                相手の設定も受け取る
+              </label>
+              <p class="subtle">オンにすると、受信した設定で自分の設定を上書きします。</p>
+            </div>
+          ) : (
+            <p class="subtle">相手が接続したら、設定を受け取るボタンが表示されます。</p>
+          )}
 
           <p class="hint">
             {notice}
