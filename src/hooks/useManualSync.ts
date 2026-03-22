@@ -17,21 +17,21 @@ type SyncSnapshot = {
 
 type SyncMessage =
   | {
-      type: 'request-snapshot';
-      roomId: string;
-      from: string;
-    }
+    type: 'request-snapshot';
+    roomId: string;
+    from: string;
+  }
   | {
-      type: 'accept-settings';
-      roomId: string;
-      from: string;
-    }
+    type: 'accept-settings';
+    roomId: string;
+    from: string;
+  }
   | {
-      type: 'snapshot';
-      roomId: string;
-      from: string;
-      snapshot: SyncSnapshot;
-    };
+    type: 'snapshot';
+    roomId: string;
+    from: string;
+    snapshot: SyncSnapshot;
+  };
 
 const ROOM_QUERY_KEY = 'room';
 const ROOM_PREFIX = '^%70Xk*8^%c5V';
@@ -120,11 +120,13 @@ export function useManualSync({
   sites,
   replaceSettings,
   replaceSites,
+  isEditing,
 }: {
   settings: Settings;
   sites: Site[];
   replaceSettings: (next: Settings) => void;
   replaceSites: (next: Site[]) => void;
+  isEditing?: boolean;
 }) {
   const deviceId = useMemo(() => readDeviceId(), []);
   const initialRoomId = useMemo(() => readInitialRoomId(), []);
@@ -140,6 +142,8 @@ export function useManualSync({
   settingsRef.current = settings;
   const sitesRef = useRef(sites);
   sitesRef.current = sites;
+  const isEditingRef = useRef(isEditing);
+  isEditingRef.current = isEditing;
   const latestAppliedStampRef = useRef(0);
   const lastSentSignatureRef = useRef('');
   const readyToBroadcastRef = useRef(false);
@@ -261,12 +265,12 @@ export function useManualSync({
     if (!roomId) return;
 
     const updatedAt = Date.now();
-    latestAppliedStampRef.current = updatedAt;
     const snapshot = makeSnapshot(updatedAt);
     const signature = serializeSnapshot(snapshot.settings, snapshot.sites);
 
     lastSentSignatureRef.current = signature;
     queuedSnapshotRef.current = null;
+
     sendMessage({
       type: 'snapshot',
       roomId,
@@ -351,8 +355,11 @@ export function useManualSync({
       if (parsed.type !== 'snapshot') return;
       if (parsed.snapshot.version !== 1) return;
 
+      if (isEditingRef.current) {
+        return;
+      }
+
       const signature = serializeSnapshot(parsed.snapshot.settings, parsed.snapshot.sites);
-      if (parsed.snapshot.updatedAt < latestAppliedStampRef.current) return;
 
       lastRemoteSnapshotRef.current = parsed.snapshot;
       const currentSignature = serializeSnapshot(settingsRef.current, sitesRef.current);

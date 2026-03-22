@@ -86,6 +86,7 @@ export function App() {
     sites,
     replaceSettings,
     replaceSites,
+    isEditing: Boolean(editingId) || isCreating,
   });
 
   const computePopupStyle = (rect: DOMRect) => {
