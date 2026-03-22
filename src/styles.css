@@ -412,6 +412,100 @@ input {
   gap: 10px;
 }
 
+.sync-accept-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sync-accept-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sync-accept-copy .settings-label {
+  font-weight: 600;
+}
+
+.sync-accept-copy .subtle {
+  margin: 0;
+}
+
+.sync-accept-button {
+  min-width: 160px;
+  border: 1px solid var(--border);
+  background: var(--button-bg);
+  font-weight: 700;
+}
+
+.sync-accept-button.enabled {
+  border-color: rgba(34, 197, 94, 0.35);
+  background: rgba(34, 197, 94, 0.14);
+}
+
+.sync-accept-button.disabled {
+  border-color: rgba(148, 163, 184, 0.35);
+  background: rgba(148, 163, 184, 0.14);
+}
+
+.settings-label.toggle {
+  position: relative;
+  padding-left: 56px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.settings-label.toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.settings-label.toggle .toggle-switch {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 46px;
+  height: 26px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.3);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.settings-label.toggle .toggle-switch::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--card-bg);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.settings-label.toggle input:checked + .toggle-switch {
+  background: rgba(99, 102, 241, 0.35);
+  border-color: rgba(99, 102, 241, 0.6);
+}
+
+.settings-label.toggle input:checked + .toggle-switch::after {
+  transform: translate(18px, -50%);
+  background: white;
+  border-color: rgba(99, 102, 241, 0.9);
+}
+
+.settings-label.toggle input:focus-visible + .toggle-switch {
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
+}
+
 .sync-room-row {
   gap: 10px;
 }
@@ -481,62 +575,6 @@ button {
 button:hover {
   transform: scale(1.01);
   background: var(--button-hover);
-}
-
-.settings-label.toggle {
-  position: relative;
-  padding-left: 56px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.settings-label.toggle input {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.settings-label.toggle .toggle-switch {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 46px;
-  height: 26px;
-  border-radius: 999px;
-  background: rgba(148, 163, 184, 0.3);
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  transition: background 0.2s ease, border-color 0.2s ease;
-}
-
-.settings-label.toggle .toggle-switch::after {
-  content: '';
-  position: absolute;
-  left: 4px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--card-bg);
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  transition: transform 0.2s ease, background 0.2s ease;
-}
-
-.settings-label.toggle input:checked + .toggle-switch {
-  background: rgba(99, 102, 241, 0.35);
-  border-color: rgba(99, 102, 241, 0.6);
-}
-
-.settings-label.toggle input:checked + .toggle-switch::after {
-  transform: translate(18px, -50%);
-  background: white;
-  border-color: rgba(99, 102, 241, 0.9);
-}
-
-.settings-label.toggle input:focus-visible + .toggle-switch {
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
 }
 
 button.primary {

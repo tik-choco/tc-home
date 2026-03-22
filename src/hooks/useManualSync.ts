@@ -20,6 +20,11 @@ type SyncMessage =
       from: string;
     }
   | {
+      type: 'accept-settings';
+      roomId: string;
+      from: string;
+    }
+  | {
       type: 'snapshot';
       roomId: string;
       from: string;
@@ -63,6 +68,10 @@ function serializeSnapshot(settings: Settings, sites: Site[]) {
     settings,
     sites,
   });
+}
+
+function settingsSignature(settings: Settings) {
+  return JSON.stringify(settings);
 }
 
 function readPeerCount(node: MistNode, selfId: string) {
@@ -128,12 +137,11 @@ export function useManualSync({
   const deviceId = useMemo(() => readDeviceId(), []);
   const initialRoomId = useMemo(() => readInitialRoomId(), []);
   const [roomId, setRoomId] = useState(initialRoomId);
-  const [syncRequested, setSyncRequested] = useState(Boolean(initialRoomId));
   const [status, setStatus] = useState<SyncStatus>('idle');
-  const [notice, setNotice] = useState(initialRoomId ? '同期ルームに接続しています。' : '同期リンクを作成できます。');
   const [error, setError] = useState('');
-  const [acceptRemoteSettings, setAcceptRemoteSettings] = useState(true);
+  const [acceptRemoteSettingsValue, setAcceptRemoteSettingsValue] = useState(true);
   const [peerCount, setPeerCount] = useState(0);
+  const [hasRemoteSettingsDiff, setHasRemoteSettingsDiff] = useState(false);
 
   const nodeRef = useRef<MistNode | null>(null);
   const settingsRef = useRef(settings);
@@ -143,6 +151,7 @@ export function useManualSync({
   const readyToBroadcastRef = useRef(false);
   const broadcastTimerRef = useRef<number | null>(null);
   const queuedSnapshotRef = useRef<SyncSnapshot | null>(null);
+  const lastRemoteSettingsRef = useRef<Settings | null>(null);
   const activeRoomIdRef = useRef('');
   const connectingRoomIdRef = useRef('');
   const connectSessionRef = useRef(0);
@@ -154,6 +163,16 @@ export function useManualSync({
   useEffect(() => {
     sitesRef.current = sites;
   }, [sites]);
+
+  useEffect(() => {
+    const remoteSettings = lastRemoteSettingsRef.current;
+    if (!remoteSettings || acceptRemoteSettingsValue) {
+      setHasRemoteSettingsDiff(false);
+      return;
+    }
+
+    setHasRemoteSettingsDiff(settingsSignature(settings) !== settingsSignature(remoteSettings));
+  }, [acceptRemoteSettingsValue, settings]);
 
   useEffect(() => {
     const nextUrl = new URL(window.location.href);
@@ -217,6 +236,23 @@ export function useManualSync({
     setPeerCount(readPeerCount(node, deviceId));
   }, [deviceId]);
 
+  const stopCurrentConnection = useCallback(() => {
+    clearBroadcastTimer();
+    readyToBroadcastRef.current = false;
+    queuedSnapshotRef.current = null;
+    lastRemoteSettingsRef.current = null;
+    setHasRemoteSettingsDiff(false);
+    activeRoomIdRef.current = '';
+    connectingRoomIdRef.current = '';
+    setPeerCount(0);
+
+    const currentNode = nodeRef.current;
+    if (currentNode) {
+      safeLeaveRoom(currentNode);
+      nodeRef.current = null;
+    }
+  }, [clearBroadcastTimer, safeLeaveRoom]);
+
   const sendCurrentSnapshot = useCallback(() => {
     if (!roomId) return;
 
@@ -256,6 +292,20 @@ export function useManualSync({
     });
   }, [deviceId, sendMessage]);
 
+  const setAcceptRemoteSettings = useCallback((next: boolean) => {
+    setAcceptRemoteSettingsValue((current) => {
+      if (next && !current && roomId && status === 'connected') {
+        sendMessage({
+          type: 'accept-settings',
+          roomId,
+          from: deviceId,
+        });
+      }
+
+      return next;
+    });
+  }, [deviceId, roomId, sendMessage, status]);
+
   const handleIncomingMessage = useCallback(
     (fromId: string, payload: Uint8Array) => {
       let parsed: SyncMessage | null = null;
@@ -278,66 +328,58 @@ export function useManualSync({
         return;
       }
 
+      if (parsed.type === 'accept-settings') {
+        sendCurrentSnapshot();
+        return;
+      }
+
       if (parsed.type !== 'snapshot') return;
       if (parsed.snapshot.version !== 1) return;
 
       const signature = serializeSnapshot(parsed.snapshot.settings, parsed.snapshot.sites);
       if (parsed.snapshot.updatedAt < latestAppliedStampRef.current) return;
 
+      lastRemoteSettingsRef.current = parsed.snapshot.settings;
+      const nextSettingsDiff =
+        settingsSignature(settingsRef.current) !== settingsSignature(parsed.snapshot.settings);
+
       latestAppliedStampRef.current = parsed.snapshot.updatedAt;
       lastSentSignatureRef.current = signature;
       queuedSnapshotRef.current = null;
       readyToBroadcastRef.current = true;
       setStatus('connected');
-      setNotice(acceptRemoteSettings ? '同期データを受信しました。' : '同期データを受信しました。設定は保持しています。');
-      if (acceptRemoteSettings) {
+      if (acceptRemoteSettingsValue) {
         replaceSettings(parsed.snapshot.settings);
+        setHasRemoteSettingsDiff(false);
+      } else {
+        setHasRemoteSettingsDiff(nextSettingsDiff);
       }
       replaceSites(parsed.snapshot.sites);
     },
-    [acceptRemoteSettings, deviceId, readyToBroadcastRef, replaceSettings, replaceSites, roomId, sendCurrentSnapshot],
+    [acceptRemoteSettingsValue, deviceId, readyToBroadcastRef, replaceSettings, replaceSites, roomId, sendCurrentSnapshot],
   );
 
-  useEffect(() => {
-    if (!roomId || !syncRequested) {
-      clearBroadcastTimer();
+    const connectToRoom = useCallback(async (targetRoomId: string) => {
+      const normalizedRoomId = targetRoomId.trim();
+      if (!normalizedRoomId) return;
+      if (activeRoomIdRef.current === normalizedRoomId) return;
+      if (connectingRoomIdRef.current === normalizedRoomId && nodeRef.current) return;
+
+      connectSessionRef.current += 1;
+      const sessionId = connectSessionRef.current;
+
+      stopCurrentConnection();
       readyToBroadcastRef.current = false;
-      setStatus('idle');
+      setStatus('connecting');
       setError('');
-      setNotice(roomId ? '同期を開始できます。' : '同期リンクを作成できます。');
-      const node = nodeRef.current;
-      if (node) {
-        node.leaveRoom();
-        nodeRef.current = null;
-      }
-      activeRoomIdRef.current = '';
-      connectingRoomIdRef.current = '';
-      return;
-    }
 
-    if (activeRoomIdRef.current === roomId) {
-      return;
-    }
+      const node = new MistNode(deviceId);
+      nodeRef.current = node;
+      connectingRoomIdRef.current = normalizedRoomId;
 
-    const currentNode = nodeRef.current as (MistNode & { initialized?: boolean }) | null;
-    if (connectingRoomIdRef.current === roomId && currentNode && !currentNode.initialized) {
-      return;
-    }
-
-    let active = true;
-    const node = new MistNode(deviceId);
-    nodeRef.current = node;
-    connectingRoomIdRef.current = roomId;
-    const sessionId = ++connectSessionRef.current;
-    readyToBroadcastRef.current = false;
-    setStatus('connecting');
-    setError('');
-    setNotice('同期ルームに接続しています。');
-
-    (async () => {
       try {
         await node.init();
-        if (!active || sessionId !== connectSessionRef.current) {
+        if (sessionId !== connectSessionRef.current) {
           safeLeaveRoom(node);
           return;
         }
@@ -353,44 +395,50 @@ export function useManualSync({
           }
         });
 
-        node.joinRoom(buildTransportRoomId(roomId));
-        activeRoomIdRef.current = roomId;
+        node.joinRoom(buildTransportRoomId(normalizedRoomId));
+        activeRoomIdRef.current = normalizedRoomId;
         setStatus('connected');
-        setNotice('同期ルームに接続しました。');
         refreshPeerCount(node);
         sendMessage({
           type: 'request-snapshot',
-          roomId,
+          roomId: normalizedRoomId,
           from: deviceId,
         });
 
         clearBroadcastTimer();
         broadcastTimerRef.current = window.setTimeout(() => {
-          if (!active) return;
+          if (sessionId !== connectSessionRef.current) return;
           readyToBroadcastRef.current = true;
           flushQueuedSnapshot();
         }, BROADCAST_GRACE_MS);
       } catch (caughtError) {
-        if (!active || sessionId !== connectSessionRef.current) return;
+        if (sessionId !== connectSessionRef.current) return;
         setStatus('error');
         setError(caughtError instanceof Error ? caughtError.message : '同期に失敗しました。');
-        setNotice('同期ルームへの接続に失敗しました。');
+        stopCurrentConnection();
+        return;
+      } finally {
+        if (sessionId === connectSessionRef.current) {
+          connectingRoomIdRef.current = '';
+        }
       }
-    })();
+    }, [clearBroadcastTimer, deviceId, flushQueuedSnapshot, handleIncomingMessage, refreshPeerCount, safeLeaveRoom, sendMessage, stopCurrentConnection]);
 
+  useEffect(() => {
+    if (!initialRoomId) return;
+    void connectToRoom(initialRoomId);
+  }, [connectToRoom, initialRoomId]);
+
+  useEffect(() => {
     return () => {
-      active = false;
-      clearBroadcastTimer();
-      readyToBroadcastRef.current = false;
-      connectingRoomIdRef.current = '';
-      setPeerCount(0);
-      const currentNode = nodeRef.current;
-      if (currentNode) {
-        safeLeaveRoom(currentNode);
-        nodeRef.current = null;
-      }
+      connectSessionRef.current += 1;
+      stopCurrentConnection();
+      latestAppliedStampRef.current = 0;
+      lastSentSignatureRef.current = '';
+      setStatus('idle');
+      setError('');
     };
-  }, [clearBroadcastTimer, deviceId, flushQueuedSnapshot, handleIncomingMessage, roomId, safeLeaveRoom, sendMessage]);
+  }, [stopCurrentConnection]);
 
   useEffect(() => {
     if (!roomId) return;
@@ -422,22 +470,14 @@ export function useManualSync({
   const createRoom = useCallback(() => {
     const nextRoomId = crypto.randomUUID();
     setRoomId(nextRoomId);
-    setNotice('同期リンクを作成しました。');
     return nextRoomId;
   }, []);
 
   const startSync = useCallback(() => {
-    if (!roomId) {
-      const nextRoomId = createRoom();
-      setSyncRequested(true);
-      setNotice('同期ルームに接続しています。');
-      return nextRoomId;
-    }
-
-    setSyncRequested(true);
-    setNotice('同期ルームに接続しています。');
-    return roomId;
-  }, [createRoom, roomId]);
+    const nextRoomId = roomId || createRoom();
+    void connectToRoom(nextRoomId);
+    return nextRoomId;
+  }, [connectToRoom, createRoom, roomId]);
 
   const copyInviteLink = useCallback(async () => {
     const nextRoomId = roomId || createRoom();
@@ -445,11 +485,9 @@ export function useManualSync({
 
     try {
       await copyToClipboard(inviteUrl);
-      setNotice('同期リンクをコピーしました。');
       return inviteUrl;
     } catch {
       setError('クリップボードにコピーできませんでした。');
-      setNotice('同期リンクのコピーに失敗しました。');
       return inviteUrl;
     }
   }, [createRoom, roomId]);
@@ -457,27 +495,24 @@ export function useManualSync({
   const inviteUrl = useMemo(() => (roomId ? buildInviteUrl(roomId) : ''), [roomId]);
 
   const disconnect = useCallback(() => {
-    clearBroadcastTimer();
-    readyToBroadcastRef.current = false;
+    connectSessionRef.current += 1;
+    stopCurrentConnection();
     queuedSnapshotRef.current = null;
     lastSentSignatureRef.current = '';
     latestAppliedStampRef.current = 0;
-    setPeerCount(0);
-    setSyncRequested(false);
     setStatus('idle');
     setError('');
-    setNotice('同期を終了しました。');
-  }, [clearBroadcastTimer]);
+  }, [stopCurrentConnection]);
 
   return {
     roomId,
     inviteUrl,
     status,
     error,
-    notice,
-    acceptRemoteSettings,
+    acceptRemoteSettings: acceptRemoteSettingsValue,
     setAcceptRemoteSettings,
     peerCount,
+    hasRemoteSettingsDiff,
     createRoom,
     startSync,
     copyInviteLink,

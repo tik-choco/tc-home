@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { makeTitle, normalizeUrl, safeHostname, Site } from './utils/site';
 import { useSites } from './hooks/useSites';
 import { useAutoTitle } from './hooks/useAutoTitle';
@@ -39,6 +39,7 @@ export function App() {
   const [popupStyle, setPopupStyle] = useState<Record<string, string | number> | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSyncOpen, setIsSyncOpen] = useState(false);
+  const previousPeerCountRef = useRef(0);
 
   const { isFetching } = useAutoTitle({
     url: normalizeUrl(input),
@@ -59,11 +60,11 @@ export function App() {
   const {
     roomId,
     status: syncStatus,
-    notice: syncNotice,
     error: syncError,
     acceptRemoteSettings,
     setAcceptRemoteSettings,
     peerCount,
+    hasRemoteSettingsDiff,
     createRoom,
     startSync,
     copyInviteLink,
@@ -125,6 +126,21 @@ export function App() {
     setInput('');
     setTitleInput('');
   }, [isEditMode, editingId, isCreating, sites]);
+
+  useEffect(() => {
+    const previousPeerCount = previousPeerCountRef.current;
+    previousPeerCountRef.current = peerCount;
+
+    if (syncStatus !== 'connected') {
+      return;
+    }
+
+    if (peerCount <= 0 || previousPeerCount > 0 || isSyncOpen) {
+      return;
+    }
+
+    setIsSyncOpen(true);
+  }, [isSyncOpen, peerCount, syncStatus]);
 
 
   const saveSite = () => {
@@ -259,10 +275,10 @@ export function App() {
         onClose={() => setIsSyncOpen(false)}
         roomId={roomId}
         status={syncStatus}
-        notice={syncNotice}
         error={syncError}
         acceptRemoteSettings={acceptRemoteSettings}
         peerCount={peerCount}
+        hasRemoteSettingsDiff={hasRemoteSettingsDiff}
         onCopyInvite={copyInviteLink}
         onCreateRoom={createRoom}
         onStartSync={startSync}

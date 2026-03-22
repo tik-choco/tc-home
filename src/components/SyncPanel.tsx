@@ -3,10 +3,10 @@ type Props = {
   onClose: () => void;
   roomId: string;
   status: 'idle' | 'connecting' | 'connected' | 'error';
-  notice: string;
   error: string;
   acceptRemoteSettings: boolean;
   peerCount: number;
+  hasRemoteSettingsDiff: boolean;
   onCopyInvite: () => Promise<string> | string;
   onCreateRoom: () => string;
   onStartSync: () => string;
@@ -32,10 +32,10 @@ export function SyncPanel({
   onClose,
   roomId,
   status,
-  notice,
   error,
   acceptRemoteSettings,
   peerCount,
+  hasRemoteSettingsDiff,
   onCopyInvite,
   onCreateRoom,
   onStartSync,
@@ -43,7 +43,7 @@ export function SyncPanel({
   onToggleAcceptRemoteSettings,
 }: Props) {
   const isActive = status === 'connecting' || status === 'connected';
-  const hasPeer = peerCount > 0;
+  const shouldShowAcceptButton = peerCount > 0 && hasRemoteSettingsDiff;
 
   return (
     <div class={`modal-backdrop ${open ? 'open' : ''}`} onClick={onClose}>
@@ -97,29 +97,22 @@ export function SyncPanel({
             )}
           </div>
 
-          {hasPeer ? (
+          {shouldShowAcceptButton ? (
             <div class="settings-row">
-              <label class="settings-label toggle">
-                <input
-                  type="checkbox"
-                  checked={acceptRemoteSettings}
-                  onInput={(event) =>
-                    onToggleAcceptRemoteSettings((event.currentTarget as HTMLInputElement).checked)
-                  }
-                />
-                <span class="toggle-switch" aria-hidden="true" />
-                相手の設定も受け取る
-              </label>
-              <p class="subtle">オンにすると、受信した設定で自分の設定を上書きします。</p>
+              <div class="sync-actions">
+                <button
+                  type="button"
+                  class={`sync-accept-button ${acceptRemoteSettings ? 'enabled' : 'disabled'}`}
+                  aria-pressed={acceptRemoteSettings}
+                  onClick={() => onToggleAcceptRemoteSettings(!acceptRemoteSettings)}
+                >
+                  {acceptRemoteSettings ? '受け入れる' : '受け入れない'}
+                </button>
+              </div>
             </div>
-          ) : (
-            <p class="subtle">相手が接続したら、設定を受け取るボタンが表示されます。</p>
-          )}
+          ) : null}
 
-          <p class="hint">
-            {notice}
-            {error ? ` / ${error}` : ''}
-          </p>
+          {error ? <p class="hint">{error}</p> : null}
         </div>
       </div>
     </div>

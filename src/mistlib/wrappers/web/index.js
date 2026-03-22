@@ -228,13 +228,7 @@ export class MistNode {
     }
 
     leaveRoom() {
-        if (!this.initialized) {
-            return;
-        }
-        try {
-            mist_leave_room();
-        } finally {
-            this.initialized = false;
-        }
+        mist_leave_room();
+        this.initialized = false;
     }
 }
