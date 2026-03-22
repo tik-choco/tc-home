@@ -21,10 +21,12 @@ import wasm_init, {
     storage_get as mist_storage_get,
 } from '../../mistlib-wasm/pkg/mistlib_wasm.js';
 
+import wasm_url from '../../mistlib-wasm/pkg/mistlib_wasm_bg.wasm?url';
+
 let wasm_initialized = false;
 export async function init() {
     if (wasm_initialized) return;
-    await wasm_init();
+    await wasm_init(wasm_url);
     wasm_initialized = true;
 }
 
