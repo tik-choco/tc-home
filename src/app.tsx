@@ -135,8 +135,6 @@ export function App() {
     setTitleInput('');
   }, [isEditMode, editingId, isCreating, sites]);
 
-  // Sync パネルの自動表示は行わない
-  // 差分発生時に確認画面を出し、解決後は `SyncPanel` を保持する
   useEffect(() => {
     if (syncStatus === 'connected' && hasRemoteStateDiff && !acceptRemoteState) {
       setIsDiffConfirmOpen(true);
