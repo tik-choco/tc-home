@@ -1,12 +1,15 @@
+import { getMistNode } from '../utils/mist';
+
 type Props = {
   open: boolean;
   onClose: () => void;
   darkMode: boolean;
   backgroundUrl: string;
+  previewUrl: string;
   onToggleDarkMode: (next: boolean) => void;
   onBackgroundUrlChange: (url: string) => void;
   onResetBackground: () => void;
-  onUploadBackground: (dataUrl: string) => void;
+  onUploadBackground: (url: string) => void;
 };
 
 export function SettingsPanel({
@@ -14,23 +17,26 @@ export function SettingsPanel({
   onClose,
   darkMode,
   backgroundUrl,
+  previewUrl,
   onToggleDarkMode,
   onBackgroundUrlChange,
   onResetBackground,
   onUploadBackground,
 }: Props) {
-  const handleFileChange = (event: Event) => {
+  const handleFileChange = async (event: Event) => {
     const input = event.currentTarget as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        onUploadBackground(reader.result);
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      const node = await getMistNode();
+      const buffer = await file.arrayBuffer();
+      const data = new Uint8Array(buffer);
+      const cid = await node.storageSet(file.name, data);
+      onUploadBackground(`mist:${cid}`);
+    } catch (e) {
+      console.error('Failed to upload to mist storage:', e);
+    }
   };
 
   return (
@@ -68,7 +74,7 @@ export function SettingsPanel({
             </label>
             <input
               id="background-url"
-              type="url"
+              type="text"
               value={backgroundUrl}
               placeholder="https://example.com/photo.jpg"
               onInput={(event) =>
@@ -98,10 +104,10 @@ export function SettingsPanel({
           ) : null}
         </div>
 
-        {backgroundUrl ? (
+        {previewUrl ? (
           <div class="preview-wrap">
             <div class="preview-head">Preview</div>
-            <div class="preview" style={`background-image: url(${backgroundUrl});`} />
+            <div class="preview" style={`background-image: url(${previewUrl});`} />
           </div>
         ) : null}
       </div>

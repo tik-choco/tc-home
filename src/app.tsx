@@ -58,6 +58,7 @@ export function App() {
     setBackgroundUrl,
     replaceSettings,
     resetBackground,
+    previewBackground,
   } = useSettings();
 
   const currentSettings = useMemo(() => ({
@@ -265,8 +266,9 @@ export function App() {
       <SettingsPanel
         open={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        darkMode={currentSettings.darkMode}
-        backgroundUrl={currentSettings.backgroundUrl}
+        darkMode={settings.darkMode}
+        backgroundUrl={settings.backgroundUrl}
+        previewUrl={previewBackground}
         onToggleDarkMode={setDarkMode}
         onBackgroundUrlChange={setBackgroundUrl}
         onUploadBackground={setBackgroundUrl}

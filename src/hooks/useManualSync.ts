@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { DELIVERY_RELIABLE, EVENT_RAW, MistNode } from '../mistlib/wrappers/web/index.js';
 import type { Site } from '../utils/site';
 import type { Settings } from './useSettings';
+import { readDeviceId } from '../utils/device';
+import { getMistNode } from '../utils/mist';
 
 type SyncStatus = 'idle' | 'connecting' | 'connected' | 'error';
 
@@ -33,18 +35,8 @@ type SyncMessage =
 
 const ROOM_QUERY_KEY = 'room';
 const ROOM_PREFIX = '^%70Xk*8^%c5V';
-const DEVICE_STORAGE_KEY = 'tc-home-device-id';
 const BROADCAST_GRACE_MS = 500;
 const PRESENCE_EVENT_TYPES = new Set([2, 3, 4]);
-
-function readDeviceId() {
-  const stored = localStorage.getItem(DEVICE_STORAGE_KEY);
-  if (stored) return stored;
-
-  const next = crypto.randomUUID();
-  localStorage.setItem(DEVICE_STORAGE_KEY, next);
-  return next;
-}
 
 function readInitialRoomId() {
   const queryRoom = new URLSearchParams(window.location.search).get(ROOM_QUERY_KEY)?.trim();
@@ -240,7 +232,13 @@ export function useManualSync({
   }, []);
 
   const refreshPeerCount = useCallback((node: MistNode) => {
-    setPeerCount(readPeerCount(node, deviceId));
+    const count = readPeerCount(node, deviceId);
+    setPeerCount(count);
+    if (count === 0) {
+      lastRemoteSnapshotRef.current = null;
+      setHasRemoteStateDiff(false);
+      setAcceptRemoteStateValue(false);
+    }
   }, [deviceId]);
 
   const stopCurrentConnection = useCallback(() => {
@@ -386,80 +384,79 @@ export function useManualSync({
     [deviceId, readyToBroadcastRef, sendCurrentSnapshot],
   );
 
-    const connectToRoom = useCallback(async (targetRoomId: string) => {
-      const normalizedRoomId = targetRoomId.trim();
-      if (!normalizedRoomId) return;
-      if (activeRoomIdRef.current === normalizedRoomId) return;
-      if (connectingRoomIdRef.current === normalizedRoomId && nodeRef.current) return;
+  const connectToRoom = useCallback(async (targetRoomId: string) => {
+    const normalizedRoomId = targetRoomId.trim();
+    if (!normalizedRoomId) return;
+    if (activeRoomIdRef.current === normalizedRoomId) return;
+    if (connectingRoomIdRef.current === normalizedRoomId && nodeRef.current) return;
 
-      connectSessionRef.current += 1;
-      const sessionId = connectSessionRef.current;
+    connectSessionRef.current += 1;
+    const sessionId = connectSessionRef.current;
 
-      stopCurrentConnection();
-      readyToBroadcastRef.current = false;
-      setAcceptRemoteStateValue(false);
-      setStatus('connecting');
-      setError('');
+    stopCurrentConnection();
+    readyToBroadcastRef.current = false;
+    setAcceptRemoteStateValue(false);
+    setStatus('connecting');
+    setError('');
 
-      const node = new MistNode(deviceId);
+    connectingRoomIdRef.current = normalizedRoomId;
+
+    try {
+      const node = await getMistNode();
       nodeRef.current = node;
-      connectingRoomIdRef.current = normalizedRoomId;
 
-      try {
-        await node.init();
-        if (sessionId !== connectSessionRef.current) {
-          safeLeaveRoom(node);
+      if (sessionId !== connectSessionRef.current) {
+        return;
+      }
+
+      node.onEvent((eventType, fromId, payload) => {
+        if (eventType === EVENT_RAW) {
+          handleIncomingMessage(fromId, payload as Uint8Array);
           return;
         }
 
-        node.onEvent((eventType, fromId, payload) => {
-          if (eventType === EVENT_RAW) {
-            handleIncomingMessage(fromId, payload as Uint8Array);
-            return;
+        if (PRESENCE_EVENT_TYPES.has(eventType)) {
+          refreshPeerCount(node);
+          if (eventType === 2) {
+            sendCurrentSnapshot();
           }
-
-          if (PRESENCE_EVENT_TYPES.has(eventType)) {
-            refreshPeerCount(node);
-            if (eventType === 2) {
-              sendCurrentSnapshot();
-            }
-          }
-        });
-
-        node.joinRoom(buildTransportRoomId(normalizedRoomId));
-        activeRoomIdRef.current = normalizedRoomId;
-        setStatus('connected');
-        refreshPeerCount(node);
-
-        // 接続直後はルームへの登録が完了するまで極短時間待ってからリクエストを送る
-        window.setTimeout(() => {
-          if (sessionId !== connectSessionRef.current) return;
-          sendMessage({
-            type: 'request-snapshot',
-            roomId: normalizedRoomId,
-            from: deviceId,
-          });
-        }, 100);
-
-        clearBroadcastTimer();
-        queuedSnapshotRef.current = makeSnapshot();
-        broadcastTimerRef.current = window.setTimeout(() => {
-          if (sessionId !== connectSessionRef.current) return;
-          readyToBroadcastRef.current = true;
-          flushQueuedSnapshot();
-        }, BROADCAST_GRACE_MS);
-      } catch (caughtError) {
-        if (sessionId !== connectSessionRef.current) return;
-        setStatus('error');
-        setError(caughtError instanceof Error ? caughtError.message : '同期に失敗しました。');
-        stopCurrentConnection();
-        return;
-      } finally {
-        if (sessionId === connectSessionRef.current) {
-          connectingRoomIdRef.current = '';
         }
+      });
+
+      node.joinRoom(buildTransportRoomId(normalizedRoomId));
+      activeRoomIdRef.current = normalizedRoomId;
+      setStatus('connected');
+      refreshPeerCount(node);
+
+      // 接続直後はルームへの登録が完了するまで極短時間待ってからリクエストを送る
+      window.setTimeout(() => {
+        if (sessionId !== connectSessionRef.current) return;
+        sendMessage({
+          type: 'request-snapshot',
+          roomId: normalizedRoomId,
+          from: deviceId,
+        });
+      }, 100);
+
+      clearBroadcastTimer();
+      queuedSnapshotRef.current = makeSnapshot();
+      broadcastTimerRef.current = window.setTimeout(() => {
+        if (sessionId !== connectSessionRef.current) return;
+        readyToBroadcastRef.current = true;
+        flushQueuedSnapshot();
+      }, BROADCAST_GRACE_MS);
+    } catch (caughtError) {
+      if (sessionId !== connectSessionRef.current) return;
+      setStatus('error');
+      setError(caughtError instanceof Error ? caughtError.message : '同期に失敗しました。');
+      stopCurrentConnection();
+      return;
+    } finally {
+      if (sessionId === connectSessionRef.current) {
+        connectingRoomIdRef.current = '';
       }
-    }, [clearBroadcastTimer, deviceId, flushQueuedSnapshot, handleIncomingMessage, refreshPeerCount, safeLeaveRoom, sendMessage, stopCurrentConnection]);
+    }
+  }, [clearBroadcastTimer, deviceId, flushQueuedSnapshot, handleIncomingMessage, refreshPeerCount, stopCurrentConnection, sendMessage, makeSnapshot]);
 
   useEffect(() => {
     if (!initialRoomId) return;

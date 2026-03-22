@@ -5,7 +5,9 @@ export const DELIVERY_RELIABLE: number;
 export const DELIVERY_UNRELIABLE_ORDERED: number;
 export const DELIVERY_UNRELIABLE: number;
 
+export function init(): Promise<void>;
 export function storage_add(path: string, data: Uint8Array): Promise<string>;
+export function storage_set(path: string, data: Uint8Array): Promise<string>;
 export function storage_get(path: string): Promise<Uint8Array>;
 
 export type DeliveryMethod =
@@ -70,4 +72,6 @@ export class MistNode {
     ): Promise<Array<{ trackId: string; track: MediaStreamTrack }>>;
 
     attachMedia<T extends HTMLMediaElement>(element: T, trackOrStream: MediaStreamTrack | MediaStream): MediaStream;
+    storageSet(name: string, data: Uint8Array): Promise<string>;
+    storageGet(cid: string): Promise<Uint8Array>;
 }

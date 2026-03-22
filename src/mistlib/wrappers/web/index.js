@@ -1,4 +1,4 @@
-import init, {
+import wasm_init, {
     init as mist_init,
     update_position as mist_update_position,
     get_neighbors as mist_get_neighbors,
@@ -21,6 +21,13 @@ import init, {
     storage_get as mist_storage_get,
 } from '../../mistlib-wasm/pkg/mistlib_wasm.js';
 
+let wasm_initialized = false;
+export async function init() {
+    if (wasm_initialized) return;
+    await wasm_init();
+    wasm_initialized = true;
+}
+
 export const EVENT_RAW = 0;
 export const MEDIA_EVENT_TRACK_ADDED = 100;
 export const MEDIA_EVENT_TRACK_REMOVED = 101;
@@ -28,7 +35,11 @@ export const DELIVERY_RELIABLE = 0;
 export const DELIVERY_UNRELIABLE_ORDERED = 1;
 export const DELIVERY_UNRELIABLE = 2;
 export const storage_add = mist_storage_add;
+export const storage_set = mist_storage_add;
 export const storage_get = mist_storage_get;
+
+let callbacks_registered = false;
+const active_nodes = new Set();
 
 export class MistNode {
     constructor(nodeId, signalingUrl = "wss://rtc.tik-choco.com/signaling") {
@@ -37,28 +48,37 @@ export class MistNode {
         this.initialized = false;
         this._onEvent = null;
         this._onMediaEvent = null;
+        active_nodes.add(this);
     }
 
     async init() {
         if (this.initialized) return;
         await init();
         mist_init(this.nodeId, this.signalingUrl);
-        mist_register_event_callback((eventType, fromId, payload) => {
-            if (this._onEvent) {
-                this._onEvent(eventType, fromId, payload);
-            }
-        });
-        mist_register_media_event_callback((eventType, fromId, trackId, kind, track, stream) => {
-            if (this._onMediaEvent) {
-                this._onMediaEvent(eventType, {
-                    fromId,
-                    trackId,
-                    kind,
-                    track,
-                    stream: stream ?? undefined,
-                });
-            }
-        });
+
+        if (!callbacks_registered) {
+            mist_register_event_callback((eventType, fromId, payload) => {
+                for (const node of active_nodes) {
+                    if (node._onEvent) {
+                        node._onEvent(eventType, fromId, payload);
+                    }
+                }
+            });
+            mist_register_media_event_callback((eventType, fromId, trackId, kind, track, stream) => {
+                for (const node of active_nodes) {
+                    if (node._onMediaEvent) {
+                        node._onMediaEvent(eventType, {
+                            fromId,
+                            trackId,
+                            kind,
+                            track,
+                            stream: stream ?? undefined,
+                        });
+                    }
+                }
+            });
+            callbacks_registered = true;
+        }
         this.initialized = true;
     }
 
@@ -225,6 +245,16 @@ export class MistNode {
             : new MediaStream([trackOrStream]);
         element.srcObject = stream;
         return stream;
+    }
+
+    async storageSet(name, data) {
+        if (!this.initialized) await this.init();
+        return mist_storage_add(name, data);
+    }
+
+    async storageGet(cid) {
+        if (!this.initialized) await this.init();
+        return mist_storage_get(cid);
     }
 
     leaveRoom() {

@@ -491,18 +491,18 @@ input {
   transition: transform 0.2s ease, background 0.2s ease;
 }
 
-.settings-label.toggle input:checked + .toggle-switch {
+.settings-label.toggle input:checked+.toggle-switch {
   background: rgba(99, 102, 241, 0.35);
   border-color: rgba(99, 102, 241, 0.6);
 }
 
-.settings-label.toggle input:checked + .toggle-switch::after {
+.settings-label.toggle input:checked+.toggle-switch::after {
   transform: translate(18px, -50%);
   background: white;
   border-color: rgba(99, 102, 241, 0.9);
 }
 
-.settings-label.toggle input:focus-visible + .toggle-switch {
+.settings-label.toggle input:focus-visible+.toggle-switch {
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
 }
 
@@ -868,12 +868,13 @@ button.danger:active {
   transform: scale(1.08);
 }
 
-.system-grid > *,
-.recommend-list > * {
+.system-grid>*,
+.recommend-list>* {
   animation: tile-enter 320ms ease-out both;
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .shell,
   .add-panel,
   .add-panel.open,
@@ -882,8 +883,8 @@ button.danger:active {
   .modal-card,
   .modal-backdrop.open .modal-card,
   .app-tile,
-  .system-grid > *,
-  .recommend-list > * {
+  .system-grid>*,
+  .recommend-list>* {
     animation: none;
     transition: none;
   }
@@ -915,7 +916,7 @@ button.danger:active {
 @media (max-width: 640px) {
   .shell {
     width: min(100vw - 16px, 1440px);
-    padding-top: 12px;
+    padding: 12px;
   }
 
   .grid-head {
