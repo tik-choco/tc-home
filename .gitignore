@@ -1,0 +1,28 @@
+.DS_*
+*.log
+logs
+**/*.backup.*
+**/*.back.*
+
+node_modules
+bower_components
+
+*.sublime*
+
+psd
+thumb
+sketch
+
+.omc/
+
+dist/
+dist-ssr/
+*.local
+npm-debug.log*
+*.tsbuildinfo
+
+# mistlib's own git clone cache used by scripts/fetch-mistlib.mjs; the
+# built output it produces (src/vendor/mistlib) IS committed.
+.mistlib-src
+
+.env
