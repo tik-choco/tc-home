@@ -6,30 +6,6 @@ export type Site = {
   addedAt: number;
 };
 
-export const defaultSites: Site[] = [
-  {
-    id: crypto.randomUUID(),
-    url: 'https://gdm.tik-choco.com/vrsns/',
-    title: 'VRSNS',
-    hostname: 'gdm.tik-choco.com',
-    addedAt: Date.now(),
-  },
-  {
-    id: crypto.randomUUID(),
-    url: 'https://github.com/tik-choco-lab/mistlib',
-    title: 'Development',
-    hostname: 'github.com',
-    addedAt: Date.now(),
-  },
-  {
-    id: crypto.randomUUID(),
-    url: 'https://github.com/tik-choco/tc-home',
-    title: 'Home',
-    hostname: 'github.com',
-    addedAt: Date.now(),
-  },
-];
-
 export function safeHostname(input: string) {
   try {
     return new URL(input).hostname;

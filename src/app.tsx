@@ -11,6 +11,8 @@ import { SyncPanel } from './components/SyncPanel';
 import { DiffConfirmPanel } from './components/DiffConfirmPanel';
 import { QRPanel } from './components/QRPanel';
 import { SystemApps } from './components/SystemApps';
+import { Onboarding } from './components/Onboarding';
+import { markOnboardingDone, shouldShowOnboarding, subscribeOnboardingRequests } from './lib/onboarding';
 
 const systemApps: Site[] = [
   // {
@@ -44,6 +46,24 @@ export function App() {
   const [isDiffConfirmOpen, setIsDiffConfirmOpen] = useState(false);
   const previousPeerCountRef = useRef(0);
   const previousDiffRef = useRef(false);
+
+  // First-run wizard: shown once on a fresh install, and re-openable from the
+  // settings screen. Closing it (any path) marks onboarding done.
+  const [showOnboarding, setShowOnboarding] = useState(() => shouldShowOnboarding());
+  useEffect(() => subscribeOnboardingRequests(() => setShowOnboarding(true)), []);
+
+  function closeOnboarding() {
+    markOnboardingDone();
+    setShowOnboarding(false);
+  }
+
+  function addRecommendedSite(site: Site) {
+    addSite({
+      ...site,
+      id: crypto.randomUUID(),
+      addedAt: Date.now(),
+    });
+  }
 
   const { isFetching } = useAutoTitle({
     url: normalizeUrl(input),
@@ -248,13 +268,7 @@ export function App() {
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenSync={handleOpenSync}
         isSyncOpen={isSyncOpen}
-        onAddRecommended={(site) => {
-          addSite({
-            ...site,
-            id: crypto.randomUUID(),
-            addedAt: Date.now(),
-          });
-        }}
+        onAddRecommended={addRecommendedSite}
       />
 
       <AppGrid
@@ -310,6 +324,10 @@ export function App() {
         onClose={() => setIsQrOpen(false)}
         url={inviteUrl}
       />
+
+      {showOnboarding && (
+        <Onboarding sites={sites} onAdd={addRecommendedSite} onClose={closeOnboarding} />
+      )}
     </main>
   );
 }

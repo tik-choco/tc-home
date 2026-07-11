@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from 'preact/hooks';
+import { useMemo, useState } from 'preact/hooks';
 import { normalizeUrlKey, type Site } from '../utils/site';
+import { useRecommendedApps } from '../hooks/useRecommendedApps';
 import { AppTile } from './AppTile';
 import { RecommendedPanel } from './RecommendedPanel';
 import { SystemIconTile } from './SystemIconTile';
-
-const RECOMMENDED_URL = 'https://raw.githubusercontent.com/tik-choco/tc-registry/main/apps.json';
 
 type Props = {
   apps: Site[];
@@ -29,29 +28,13 @@ export function SystemApps({
   isSyncOpen,
   onAddRecommended,
 }: Props) {
-  const [recommended, setRecommended] = useState<Site[]>([]);
+  const { recommended } = useRecommendedApps();
   const [showRecommended, setShowRecommended] = useState(false);
 
   const existingUrls = useMemo(
     () => new Set(sites.map((site) => normalizeUrlKey(site.url))),
     [sites],
   );
-
-  useEffect(() => {
-    let canceled = false;
-    fetch(RECOMMENDED_URL)
-      .then((res) => res.json())
-      .then((data: Site[]) => {
-        if (canceled || !Array.isArray(data)) return;
-        setRecommended(data);
-      })
-      .catch(() => {
-        /* ignore */
-      });
-    return () => {
-      canceled = true;
-    };
-  }, []);
 
   return (
     <>

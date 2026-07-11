@@ -1,5 +1,6 @@
 import { storage_add } from '../vendor/mistlib/wrappers/web/index.js';
 import { getMistNode } from '../utils/mist';
+import { requestOnboarding } from '../lib/onboarding';
 
 type Props = {
   open: boolean;
@@ -103,6 +104,21 @@ export function SettingsPanel({
               </button>
             </div>
           ) : null}
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-row">
+            <label class="settings-label">チュートリアル</label>
+            <button
+              type="button"
+              onClick={() => {
+                requestOnboarding();
+                onClose();
+              }}
+            >
+              チュートリアルをもう一度見る
+            </button>
+          </div>
         </div>
 
         {previewUrl ? (

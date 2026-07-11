@@ -1096,3 +1096,242 @@ button.danger:active {
   display: flex;
   justify-content: center;
 }
+
+/* Onboarding */
+
+@keyframes ob-overlay-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.ob-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 200;
+  animation: ob-overlay-in 220ms ease-out;
+}
+
+.ob-card {
+  position: relative;
+  width: min(560px, 100%);
+  max-height: min(90vh, 680px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 24px;
+  background: var(--panel-bg);
+  backdrop-filter: blur(24px);
+  border: 1px solid var(--border);
+  box-shadow: 0 24px 80px var(--shadow);
+  overflow: hidden;
+  animation: panel-enter 240ms ease-out;
+}
+
+.ob-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border-radius: 999px;
+  border: none;
+  background: rgba(235, 40, 40, 0.9);
+  color: rgba(255, 255, 255, 1);
+  font-size: 1.25rem;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: opacity 0.14s ease, transform 0.14s ease;
+  aspect-ratio: 1;
+  z-index: 1;
+}
+
+.ob-close:hover {
+  opacity: 1;
+  transform: scale(1.08);
+}
+
+.ob-close:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
+}
+
+.ob-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px 28px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ob-hero {
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
+  font-size: 3rem;
+  line-height: 1;
+  color: var(--text);
+}
+
+.ob-hero svg {
+  width: 1em;
+  height: 1em;
+}
+
+.ob-title {
+  margin: 0;
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ob-desc {
+  margin: 0;
+  text-align: center;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.ob-feature-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ob-feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+}
+
+.ob-feature-item svg,
+.ob-feature-item .ob-feature-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--text);
+}
+
+.ob-feature-item span,
+.ob-feature-item p {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.ob-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+}
+
+.ob-dots {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ob-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--border);
+  transition: background 0.2s ease, width 0.2s ease;
+}
+
+.ob-dot.active {
+  width: 22px;
+  background: var(--accent);
+}
+
+.ob-footer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ob-back {
+  padding: 10px 16px;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+.ob-back:hover {
+  background: var(--button-bg);
+  color: var(--text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .ob-overlay,
+  .ob-card {
+    animation: none;
+    transition: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .ob-body {
+    padding: 24px 18px 16px;
+  }
+
+  .ob-footer {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    padding: 14px 18px 18px;
+  }
+
+  .ob-dots {
+    order: 1;
+    justify-content: center;
+  }
+
+  .ob-footer-actions {
+    order: 2;
+    justify-content: center;
+  }
+}
+
+/* Discover list embedded in the onboarding wizard */
+.ob-browse-list {
+  flex-shrink: 0;
+  max-height: min(38vh, 300px);
+  margin-top: 2px;
+}
