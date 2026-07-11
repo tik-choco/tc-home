@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useState } from 'preact/hooks';
-import { defaultSites, Site } from '../utils/site';
+import { Site } from '../utils/site';
 
 const STORAGE_KEY = 'tc-home-sites';
 
 export function useSites() {
   const [sites, setSites] = useState<Site[]>(() => {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return defaultSites;
+    if (!raw) return [];
 
     try {
       const parsed = JSON.parse(raw) as Site[];
-      return parsed.length ? parsed : defaultSites;
+      return Array.isArray(parsed) ? parsed : [];
     } catch {
-      return defaultSites;
+      return [];
     }
   });
 

@@ -14,17 +14,23 @@ config({ path: path.join(rootDir, ".env") });
 const repo = process.env.MISTLIB_REPO;
 const ref = process.env.MISTLIB_REF || "develop";
 
-if (!repo) {
-  console.error("MISTLIB_REPO is not set in .env — copy .env.example to .env and fill it in.");
-  process.exit(1);
-}
-
 const cacheDir = path.join(rootDir, ".mistlib-src");
 const vendorDir = path.join(rootDir, "src", "vendor", "mistlib");
 // Records the commit that produced the currently vendored output. Lives
 // inside the gitignored cache dir (not the committed vendorDir) so it never
 // shows up as a spurious tracked-file change.
 const revMarkerPath = path.join(cacheDir, ".vendored-rev");
+
+if (!repo) {
+  if (existsSync(path.join(vendorDir, "pkg"))) {
+    console.log("MISTLIB_REPO is not set — using the committed vendored mistlib in src/vendor/mistlib.");
+    process.exit(0);
+  }
+  console.error(
+    "MISTLIB_REPO is required. Set it in the environment (CI secret) or in local .env (see .env.example).",
+  );
+  process.exit(1);
+}
 
 function run(cmd, args, cwd, extraEnv) {
   console.log(`$ ${cmd} ${args.join(" ")}`);
