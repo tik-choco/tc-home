@@ -1,0 +1,26 @@
+{
+  "name": "tc-home",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "predev": "node scripts/fetch-mistlib.mjs",
+    "dev": "vite --host",
+    "prebuild": "node scripts/fetch-mistlib.mjs",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "fetch-mistlib": "node scripts/fetch-mistlib.mjs"
+  },
+  "dependencies": {
+    "preact": "^10.26.4",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.4",
+    "@types/node": "^22.13.10",
+    "@types/qrcode": "^1.5.6",
+    "dotenv": "^16.4.7",
+    "typescript": "^5.8.2",
+    "vite": "^6.2.0"
+  }
+}
