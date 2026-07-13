@@ -16,7 +16,7 @@ export function QRPanel({ open, onClose, url }: Props) {
         width: 320,
         margin: 2,
         color: {
-          dark: '#0f172a', // Matches our dark mode slate
+          dark: '#14161b', // Matches --surface in dark mode
           light: '#ffffff',
         },
         errorCorrectionLevel: 'H',

@@ -1,26 +1,65 @@
 import { storage_add } from '../vendor/mistlib/wrappers/web/index.js';
 import { getMistNode } from '../utils/mist';
 import { requestOnboarding } from '../lib/onboarding';
+import type { ThemeMode } from '../hooks/useSettings';
 
 type Props = {
   open: boolean;
   onClose: () => void;
-  darkMode: boolean;
+  theme: ThemeMode;
   backgroundUrl: string;
   previewUrl: string;
-  onToggleDarkMode: (next: boolean) => void;
+  onThemeChange: (next: ThemeMode) => void;
   onBackgroundUrlChange: (url: string) => void;
   onResetBackground: () => void;
   onUploadBackground: (url: string) => void;
 };
 
+const THEME_OPTIONS: { value: ThemeMode; label: string }[] = [
+  { value: 'light', label: 'ライト' },
+  { value: 'dark', label: 'ダーク' },
+  { value: 'auto', label: '自動' },
+];
+
+function SunIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4.2" />
+      <path d="M12 2.5v2.4M12 19.1v2.4M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.6 19.4l1.7-1.7M17.7 6.3l1.7-1.7" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5Z" />
+    </svg>
+  );
+}
+
+function AutoIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="13" rx="2" />
+      <path d="M8 21h8M12 17v4" />
+    </svg>
+  );
+}
+
+function themeIcon(value: ThemeMode) {
+  if (value === 'light') return <SunIcon />;
+  if (value === 'dark') return <MoonIcon />;
+  return <AutoIcon />;
+}
+
 export function SettingsPanel({
   open,
   onClose,
-  darkMode,
+  theme,
   backgroundUrl,
   previewUrl,
-  onToggleDarkMode,
+  onThemeChange,
   onBackgroundUrlChange,
   onResetBackground,
   onUploadBackground,
@@ -57,17 +96,20 @@ export function SettingsPanel({
 
         <div class="settings-section">
           <div class="settings-row">
-            <label class="settings-label toggle">
-              <input
-                type="checkbox"
-                checked={darkMode}
-                onInput={(event) =>
-                  onToggleDarkMode((event.currentTarget as HTMLInputElement).checked)
-                }
-              />
-              <span class="toggle-switch" aria-hidden="true" />
-              Dark mode
-            </label>
+            <span class="settings-label">テーマ</span>
+            <div class="theme-switch" role="group" aria-label="テーマを選択">
+              {THEME_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={theme === option.value}
+                  onClick={() => onThemeChange(option.value)}
+                >
+                  {themeIcon(option.value)}
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div class="settings-row">
