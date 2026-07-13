@@ -18,7 +18,12 @@ export function useSites() {
 
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(sites));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sites));
+    } catch {
+      // Storage full (likely another app's data) — the new tile list
+      // still renders, it just won't survive a reload until space frees up.
+    }
   }, [sites]);
 
   const addSite = (site: Site) => {

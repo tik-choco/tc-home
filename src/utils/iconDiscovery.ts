@@ -6,6 +6,10 @@
 const CACHE_KEY = 'tc-home-icon-discovery';
 const HIT_TTL = 7 * 24 * 60 * 60 * 1000;
 const MISS_TTL = 24 * 60 * 60 * 1000;
+// Cache grows one entry per distinct site URL ever seen; without a cap it
+// would accumulate forever for long-lived installs. Keep the most recent
+// entries and let stale ones fall out first.
+const MAX_ENTRIES = 200;
 
 type CacheEntry = { icon: string | null; at: number };
 
@@ -17,9 +21,23 @@ function loadCache(): Record<string, CacheEntry> {
   }
 }
 
+// Drops expired entries and, if still over the cap, evicts the oldest
+// remaining ones so the cache can't grow without bound.
+function pruneCache(cache: Record<string, CacheEntry>): Record<string, CacheEntry> {
+  const now = Date.now();
+  let entries = Object.entries(cache).filter(
+    ([, entry]) => now - entry.at < (entry.icon ? HIT_TTL : MISS_TTL),
+  );
+  if (entries.length > MAX_ENTRIES) {
+    entries.sort((a, b) => b[1].at - a[1].at);
+    entries = entries.slice(0, MAX_ENTRIES);
+  }
+  return Object.fromEntries(entries);
+}
+
 function saveCache(cache: Record<string, CacheEntry>) {
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+    localStorage.setItem(CACHE_KEY, JSON.stringify(pruneCache(cache)));
   } catch {
     /* storage full — discovery just reruns next time */
   }
