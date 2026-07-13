@@ -38,47 +38,56 @@ export function SystemApps({
 
   return (
     <>
-      <section class="system-grid">
-        {apps.map((site) => (
-          <AppTile
-            key={site.id}
-            site={site}
-            onClick={() => onOpen(site.url)}
-            className="system-tile"
+      <div class="system-bar">
+        <section class="system-grid">
+          {apps.map((site) => (
+            <AppTile
+              key={site.id}
+              site={site}
+              onClick={() => onOpen(site.url)}
+              className="system-tile"
+            />
+          ))}
+        </section>
+
+        {/* Discover/Settings/Sync/Edit aren't user content like the pinned
+            apps above — grouping them into their own compact toolbar (vs.
+            mixing them into the same big-tile grid) makes it visually
+            obvious which icons are "your stuff" and which are app
+            controls. */}
+        <div class="system-toolbar" role="toolbar" aria-label="システム操作">
+          <SystemIconTile
+            icon="app"
+            title="Discover"
+            onClick={() => setShowRecommended(true)}
+            className={`system-toolbar-btn ${showRecommended ? 'active' : ''}`}
+            active={showRecommended}
           />
-        ))}
 
-        <SystemIconTile
-          icon="app"
-          title="Discover"
-          onClick={() => setShowRecommended(true)}
-          className={`system-tile ${showRecommended ? 'active' : ''}`}
-          active={showRecommended}
-        />
+          <SystemIconTile
+            icon="settings"
+            title="Settings"
+            onClick={onOpenSettings}
+            className="system-toolbar-btn"
+          />
 
-        <SystemIconTile
-          icon="settings"
-          title="Settings"
-          onClick={onOpenSettings}
-          className="system-tile"
-        />
+          <SystemIconTile
+            icon="sync"
+            title="Sync"
+            onClick={onOpenSync}
+            className={`system-toolbar-btn ${isSyncOpen ? 'active' : ''}`}
+            active={isSyncOpen}
+          />
 
-        <SystemIconTile
-          icon="sync"
-          title="Sync"
-          onClick={onOpenSync}
-          className={`system-tile ${isSyncOpen ? 'active' : ''}`}
-          active={isSyncOpen}
-        />
-
-        <SystemIconTile
-          icon="edit"
-          title={isEditMode ? 'Done' : 'Edit'}
-          onClick={onToggleEdit}
-          className={`system-tile edit-toggle ${isEditMode ? 'active' : ''}`}
-          active={isEditMode}
-        />
-      </section>
+          <SystemIconTile
+            icon="edit"
+            title={isEditMode ? 'Done' : 'Edit'}
+            onClick={onToggleEdit}
+            className={`system-toolbar-btn edit-toggle ${isEditMode ? 'active' : ''}`}
+            active={isEditMode}
+          />
+        </div>
+      </div>
 
       <RecommendedPanel
         open={showRecommended}

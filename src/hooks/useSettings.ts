@@ -4,9 +4,13 @@ import { readDeviceId } from '../utils/device';
 
 export type ThemeMode = 'light' | 'dark' | 'auto';
 
+export type TileStyle = 'standard' | 'frosted';
+
 export type Settings = {
   theme: ThemeMode;
   backgroundUrl: string;
+  tileStyle: TileStyle;
+  accentColor: string;
 };
 
 const STORAGE_KEY = 'tc-home-settings';
@@ -14,7 +18,11 @@ const STORAGE_KEY = 'tc-home-settings';
 const defaultSettings: Settings = {
   theme: 'auto',
   backgroundUrl: '',
+  tileStyle: 'standard',
+  accentColor: '',
 };
+
+const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 
 // Reads settings written by an older build (a plain `darkMode: boolean`
 // instead of the light/dark/auto `theme` field) and carries the user's
@@ -23,17 +31,22 @@ function migrateSettings(raw: unknown): Settings {
   if (!raw || typeof raw !== 'object') return defaultSettings;
   const value = raw as Record<string, unknown>;
   const backgroundUrl = typeof value.backgroundUrl === 'string' ? value.backgroundUrl : '';
+  const tileStyle: TileStyle =
+    value.tileStyle === 'standard' || value.tileStyle === 'frosted' ? value.tileStyle : 'standard';
+  const accentColor =
+    typeof value.accentColor === 'string' && HEX_COLOR_RE.test(value.accentColor) ? value.accentColor : '';
 
   if (value.theme === 'light' || value.theme === 'dark' || value.theme === 'auto') {
-    return { theme: value.theme, backgroundUrl };
+    return { theme: value.theme, backgroundUrl, tileStyle, accentColor };
   }
   if (typeof value.darkMode === 'boolean') {
-    return { theme: value.darkMode ? 'dark' : 'light', backgroundUrl };
+    return { theme: value.darkMode ? 'dark' : 'light', backgroundUrl, tileStyle, accentColor };
   }
-  return { ...defaultSettings, backgroundUrl };
+  return { ...defaultSettings, backgroundUrl, tileStyle, accentColor };
 }
 
 import { getMistNode } from '../utils/mist';
+import { applyAccent } from '../utils/accent';
 
 export function useSettings() {
   const [settings, setSettings] = useState<Settings>(() => {
@@ -106,6 +119,29 @@ export function useSettings() {
     document.documentElement.style.setProperty('--custom-bg', bgValue);
   }, [settings.theme, resolvedBackground]);
 
+  useEffect(() => {
+    // Tile glass style is a per-icon visual choice, independent of whether
+    // a custom background is set, so it applies unconditionally.
+    if (settings.tileStyle !== 'standard') {
+      document.documentElement.dataset.tileStyle = settings.tileStyle;
+    } else {
+      delete document.documentElement.dataset.tileStyle;
+    }
+  }, [settings.tileStyle]);
+
+  useEffect(() => {
+    applyAccent(settings.accentColor);
+  }, [settings.accentColor]);
+
+  useEffect(() => {
+    // Hook for CSS to protect text legibility over a custom wallpaper.
+    if (resolvedBackground) {
+      document.documentElement.dataset.hasBg = 'true';
+    } else {
+      delete document.documentElement.dataset.hasBg;
+    }
+  }, [resolvedBackground]);
+
   const setTheme = (value: ThemeMode) => {
     setSettings((prev) => ({ ...prev, theme: value }));
   };
@@ -114,8 +150,19 @@ export function useSettings() {
     setSettings((prev) => ({ ...prev, backgroundUrl: value }));
   };
 
+  const setTileStyle = (value: TileStyle) => {
+    setSettings((prev) => ({ ...prev, tileStyle: value }));
+  };
+
+  const setAccentColor = (value: string) => {
+    setSettings((prev) => ({ ...prev, accentColor: value }));
+  };
+
   const replaceSettings = (next: Settings) => {
-    setSettings(next);
+    // Remote peers may be running an older build whose synced Settings
+    // object is missing fields we've since added — merge over the
+    // defaults so a partial payload can't leave state half-populated.
+    setSettings({ ...defaultSettings, ...next });
   };
 
   const resetBackground = () => setBackgroundUrl('');
@@ -126,6 +173,8 @@ export function useSettings() {
     settings,
     setTheme,
     setBackgroundUrl,
+    setTileStyle,
+    setAccentColor,
     replaceSettings,
     resetBackground,
     previewBackground,

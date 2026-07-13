@@ -44,22 +44,28 @@
   --danger-bg: rgba(220, 38, 38, 0.08);
   --danger-border: rgba(220, 38, 38, 0.3);
   --danger-text: #b91c1c;
+  /* Text/icon color for content painted directly on a solid --danger
+     chip (the settings/onboarding close buttons, the tile remove badge).
+     White on this theme's --danger red. */
+  --on-danger: #ffffff;
 
   --ring: rgba(13, 148, 136, 0.5);
   --overlay: rgba(16, 24, 40, 0.45);
   --header-bg: rgba(255, 255, 255, 0.72);
 
-  /* Radii */
-  --radius-sm: 8px;
-  --radius: 12px;
-  --radius-lg: 16px;
+  /* Radii — softer, friendlier rounding than a typical dashboard UI; sized
+     up a notch across the board so cards and controls read as pillowy
+     rather than boxy. */
+  --radius-sm: 10px;
+  --radius: 16px;
+  --radius-lg: 22px;
   --radius-pill: 999px;
 
-  /* Flat, single-layer elevation — kept deliberately light so surfaces read
-     calm rather than "floating". */
-  --shadow-1: 0 1px 2px rgba(16, 24, 40, 0.08);
-  --shadow-2: 0 1px 3px rgba(16, 24, 40, 0.12);
-  --shadow-3: 0 1px 3px rgba(16, 24, 40, 0.12);
+  /* Soft, diffused elevation — larger blur radii at low opacity so shadows
+     read as an ambient glow rather than a hard drop-shadow. */
+  --shadow-1: 0 2px 8px rgba(16, 24, 40, 0.06);
+  --shadow-2: 0 4px 16px rgba(16, 24, 40, 0.08);
+  --shadow-3: 0 4px 16px rgba(16, 24, 40, 0.08);
 
   /* Icon tile surfaces: a neutral, semi-transparent wash (no hue) used for
      app/system icon tiles — mirrors a phone home screen's icon slots. */
@@ -73,6 +79,17 @@
      solid brand-colored chip. */
   --icon-bg: rgba(0, 0, 0, 0.07);
   --icon-border: rgba(0, 0, 0, 0.08);
+
+  /* Glass base color (R G B, no alpha) used to build the [data-tile-style]
+     "frosted" icon-tile surface below. Kept close to --bg so the tinted
+     surface reads as "more of the same background" rather than an
+     unrelated hue. */
+  --glass-rgb: 245 246 248;
+
+  /* Edge-highlight strength for the frosted tile style's border — a plain
+     white edge reads correctly on both light and dark surfaces, but needs
+     less opacity on dark ones to avoid looking like a hard edge. */
+  --glass-highlight-alpha: 0.35;
 
   /* Motion */
   --ease: cubic-bezier(0.2, 0, 0, 1);
@@ -126,14 +143,18 @@
   --danger-bg: rgba(248, 113, 113, 0.12);
   --danger-border: rgba(248, 113, 113, 0.35);
   --danger-text: #fca5a5;
+  /* This theme's --danger (#f87171) is a light coral — white text on it
+     only hits ~2.8:1 contrast, below the 3:1 minimum for UI components.
+     A dark, near-black tone reads correctly instead. */
+  --on-danger: #3a0d0f;
 
   --ring: rgba(45, 212, 191, 0.55);
   --overlay: rgba(0, 0, 0, 0.6);
   --header-bg: rgba(20, 22, 27, 0.72);
 
-  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-2: 0 1px 3px rgba(0, 0, 0, 0.4);
-  --shadow-3: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-1: 0 2px 8px rgba(0, 0, 0, 0.24);
+  --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.32);
+  --shadow-3: 0 4px 16px rgba(0, 0, 0, 0.32);
 
   --tile-bg: rgba(255, 255, 255, 0.08);
   --tile-bg-hover: rgba(255, 255, 255, 0.12);
@@ -141,6 +162,14 @@
 
   --icon-bg: rgba(255, 255, 255, 0.1);
   --icon-border: rgba(255, 255, 255, 0.12);
+
+  /* Dark glass base — mirrors --bg so the tile-style surfaces read as
+     "more background", not a foreign tint. */
+  --glass-rgb: 11 12 16;
+
+  /* Softer than light mode — a 0.35 white highlight reads as a hard edge
+     against dark surfaces. */
+  --glass-highlight-alpha: 0.18;
 }
 
 /* "auto" (no data-theme attribute) follows the OS preference. */
@@ -175,14 +204,18 @@
     --danger-bg: rgba(248, 113, 113, 0.12);
     --danger-border: rgba(248, 113, 113, 0.35);
     --danger-text: #fca5a5;
+    /* This theme's --danger (#f87171) is a light coral — white text on it
+       only hits ~2.8:1 contrast, below the 3:1 minimum for UI components.
+       A dark, near-black tone reads correctly instead. */
+    --on-danger: #3a0d0f;
 
     --ring: rgba(45, 212, 191, 0.55);
     --overlay: rgba(0, 0, 0, 0.6);
     --header-bg: rgba(20, 22, 27, 0.72);
 
-    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-2: 0 1px 3px rgba(0, 0, 0, 0.4);
-    --shadow-3: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-1: 0 2px 8px rgba(0, 0, 0, 0.24);
+    --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.32);
+    --shadow-3: 0 4px 16px rgba(0, 0, 0, 0.32);
 
     --tile-bg: rgba(255, 255, 255, 0.08);
     --tile-bg-hover: rgba(255, 255, 255, 0.12);
@@ -190,8 +223,97 @@
 
     --icon-bg: rgba(255, 255, 255, 0.1);
     --icon-border: rgba(255, 255, 255, 0.12);
+
+    /* Dark glass base — mirrors --bg so the tile-style surfaces read as
+       "more background", not a foreign tint. */
+    --glass-rgb: 11 12 16;
+
+    /* Softer than light mode — a 0.35 white highlight reads as a hard edge
+       against dark surfaces. */
+    --glass-highlight-alpha: 0.18;
   }
 }
+
+/* Tile glass mode — the user-selected icon-tile surface treatment
+   (Settings → "アイコンの背景"). Applies unconditionally (independent of
+   whether a background image is set): a translucent/frosted surface reads
+   fine over the plain wash too, not just photos. Targets .app-tile, which
+   every icon tile (app tiles, system tiles, the "add" tile) carries
+   regardless of its other classes — see AppTile.tsx / SystemIconTile.tsx /
+   AppGrid.tsx. Tile labels (.app-name strong) already sit on var(--text-h)
+   unconditionally, so no extra label treatment is needed on top of this
+   surface.
+
+   "frosted": true backdrop-blur glassmorphism — low-opacity surface, blur
+   doing most of the work, so shapes behind the tile read as soft and
+   blurred rather than hidden. No gloss/specular — kept deliberately calm
+   rather than shiny. */
+:root[data-tile-style='frosted'] {
+  --tile-bg: rgb(var(--glass-rgb) / 0.34);
+  --tile-bg-hover: rgb(var(--glass-rgb) / 0.44);
+  /* A thin white edge (not a --glass-rgb-tinted one) reads as "the glass's
+     own edge catching light" rather than a themed border. */
+  --tile-border: rgb(255 255 255 / var(--glass-highlight-alpha));
+  --icon-bg: rgb(var(--glass-rgb) / 0.32);
+  --icon-border: rgb(255 255 255 / var(--glass-highlight-alpha));
+}
+
+:root[data-tile-style='frosted'] .app-tile {
+  background: var(--tile-bg);
+  border-color: var(--tile-border);
+  /* Blur is the star of this style — there's no specular layer doing any
+     visual work of its own, so it has to carry the "glass" read alone.
+     Saturation stays mild so it reads as glass, not a color filter. */
+  backdrop-filter: blur(22px) saturate(1.2);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+}
+
+:root[data-tile-style='frosted'] .app-tile:hover {
+  background: var(--tile-bg-hover);
+}
+
+/* Round the grid tiles out a little further than --radius-lg so the glass
+   surface reads even softer. Excludes .system-tile, whose pill shape
+   (--radius-pill, a deliberate capsule button) should stay untouched. */
+:root[data-tile-style='frosted'] .app-tile:not(.system-tile) {
+  border-radius: 24px;
+}
+
+/* Respect the user's transparency preference: drop the blur/translucency
+   and fall back to a plain, mostly-opaque surface. */
+@media (prefers-reduced-transparency: reduce) {
+  :root[data-tile-style='frosted'] .app-tile {
+    background: var(--surface-2);
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* Wallpaper text protection — home-screen-launcher-style label treatment.
+   When a background image is set (data-has-bg, toggled by useSettings
+   once the background finishes resolving), tile labels switch to a white
+   face with a dark drop shadow so they stay legible over busy photos
+   regardless of theme — the same trick home-screen launchers use, so no
+   light/dark branching is needed here. Icons get a matching drop-shadow
+   for the same reason. */
+:root[data-has-bg] .app-name strong {
+  color: #fff;
+  text-shadow:
+    0 1px 3px rgb(0 0 0 / 0.55),
+    0 2px 10px rgb(0 0 0 / 0.35);
+}
+
+:root[data-has-bg] .app-icon,
+:root[data-has-bg] .system-icon {
+  filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.35));
+}
+
+/* Frosted doesn't get a color override here: it's a properly transparent
+   glassmorphism surface (see the [data-tile-style='frosted'] block above),
+   so the wallpaper shows through enough that it needs the same white-label
+   protection as the plain background case above — a dark --text-h label
+   would risk disappearing into busy wallpaper. */
 
 /* Legacy alias kept for readability elsewhere in this file — same value as
    --border, just named the way older component rules expect it. */
@@ -212,6 +334,12 @@ body,
 
 body {
   min-height: 100vh;
+  /* A readable body default (the platform "normal" line-height most
+     browsers use is closer to 1.1-1.2, which reads as cramped for
+     multi-line copy). Single-line UI labels below all set their own
+     tighter value where that's actually correct — this only changes
+     multi-line text that was inheriting the browser default. */
+  line-height: 1.5;
   transition: background-color var(--dur-med) var(--ease), color var(--dur-med) var(--ease);
 }
 
@@ -220,13 +348,15 @@ input {
   font: inherit;
 }
 
-/* Keyboard focus is always visible; mouse clicks stay clean. */
+/* Keyboard focus is always visible; mouse clicks stay clean. --ring (a
+   translucent accent, already defined as a token but previously unused)
+   gives keyboard focus a soft glow instead of a hard-edged ring. */
 :focus {
   outline: none;
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 3px solid var(--ring);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
@@ -399,7 +529,7 @@ input {
   width: min(520px, 100%);
   max-height: min(90vh, 800px);
   overflow: auto;
-  padding: 18px;
+  padding: 24px;
   border-radius: var(--radius-lg);
   background: var(--surface-2);
   backdrop-filter: blur(24px);
@@ -448,8 +578,41 @@ input {
 }
 
 .add-card {
-  padding: 18px;
+  position: relative;
+  padding: 20px;
   border-radius: var(--radius-lg);
+}
+
+.add-card-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border-radius: var(--radius-pill);
+  border: none;
+  background: transparent;
+  color: var(--text-subtle);
+  font-size: 1.1rem;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+
+.add-card-close:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.add-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
 }
 
 .preview-wrap {
@@ -509,7 +672,7 @@ input {
   border-radius: var(--radius-pill);
   border: none;
   background: var(--danger);
-  color: #ffffff;
+  color: var(--on-danger);
   font-size: 1.25rem;
   display: grid;
   place-items: center;
@@ -521,7 +684,7 @@ input {
 
 .settings-close:hover {
   opacity: 1;
-  transform: scale(1.08);
+  transform: scale(1.05);
 }
 
 .settings-close:focus-visible {
@@ -532,8 +695,8 @@ input {
 .settings-section {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  margin-bottom: 18px;
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .settings-row {
@@ -570,6 +733,27 @@ input {
 
 .settings-row input[readonly] {
   opacity: 0.9;
+}
+
+/* The native "Choose File" button defaults to an unstyled, dated-looking
+   platform button — restyle it to match the rest of the app's pill/ghost
+   buttons instead of leaving a visible seam between our UI and the OS's. */
+.settings-row input[type='file']::file-selector-button {
+  margin-right: 10px;
+  padding: 7px 14px;
+  border-radius: var(--radius-pill);
+  border: none;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.settings-row input[type='file']::file-selector-button:hover {
+  background: var(--accent-bg-strong);
 }
 
 /* Theme mode segmented control (light / dark / auto) */
@@ -611,6 +795,95 @@ input {
 
 .theme-switch button svg {
   flex-shrink: 0;
+}
+
+/* Accent color picker: preset swatches + a free-choice native color input,
+   sized and spaced to sit comfortably next to the theme-switch control. */
+.accent-swatches {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.accent-swatch {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.accent-swatch:hover {
+  transform: scale(1.05);
+}
+
+/* Selection ring on its own opacity-faded layer (see .app-tile::before
+   above for the same pattern) rather than transitioning box-shadow. */
+.accent-swatch::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+
+.accent-swatch[aria-pressed='true']::after {
+  opacity: 1;
+}
+
+.accent-swatches input[type='color'] {
+  width: 36px;
+  height: 30px;
+  min-width: 0;
+  min-height: 0;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+/* The native color swatch renders its own inset border by default, which
+   fights with the rounded frame above — flatten it into a clean rounded
+   chip instead. */
+.accent-swatches input[type='color']::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.accent-swatches input[type='color']::-webkit-color-swatch,
+.accent-swatches input[type='color']::-moz-color-swatch {
+  border: none;
+  border-radius: calc(var(--radius-sm) - 2px);
+}
+
+.link-reset {
+  align-self: flex-start;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.link-reset:hover {
+  color: var(--accent-hover);
+  background: transparent;
+  transform: none;
 }
 
 .sync-status-pill {
@@ -774,10 +1047,9 @@ input {
   min-width: 0;
 }
 
+/* Each field is its own row now that Save/Cancel live in .add-actions at
+   the bottom instead of sitting inline next to the title field. */
 .add-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 12px;
   margin-top: 10px;
 }
 
@@ -794,7 +1066,10 @@ input {
   background: var(--surface);
   color: var(--text);
   border: 1px solid var(--border);
-  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+  /* box-shadow (the focus ring below) isn't in this list — <input> can't
+     host a ::before/::after opacity layer to fade it in cheaply, and a
+     focus ring appearing instantly is normal, expected behavior anyway. */
+  transition: border-color var(--dur-fast) var(--ease);
 }
 
 input:focus {
@@ -815,8 +1090,12 @@ button {
   border: 1px solid var(--border);
   color: var(--text);
   cursor: pointer;
+  /* box-shadow (used by a couple of :focus-visible rings further down)
+     isn't in this list for the same reason as <input> above — an instant
+     focus ring is fine, and it keeps every button on this shared base
+     rule from paying for a property most of them never animate. */
   transition: transform var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease),
-    border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+    border-color var(--dur-fast) var(--ease);
 }
 
 button:hover {
@@ -851,6 +1130,22 @@ button.danger:hover {
   border-color: var(--danger);
 }
 
+/* Third rung of the button hierarchy: primary (filled accent) > secondary
+   (the plain base button — surface fill + border) > ghost (text-only,
+   for a dismiss/cancel action that shouldn't compete with primary). */
+button.ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-subtle);
+  box-shadow: none;
+}
+
+button.ghost:hover {
+  background: var(--surface-hover);
+  border-color: transparent;
+  color: var(--text);
+}
+
 .hint {
   min-height: 1.2em;
   margin-top: 10px;
@@ -871,6 +1166,18 @@ button.danger:hover {
   box-shadow: var(--shadow-1);
 }
 
+/* Row pairing the pinned-apps grid with the system-controls toolbar.
+   wrap lets the toolbar drop to its own line on narrow viewports instead
+   of squeezing the favorites grid. */
+.system-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
 .system-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, 124px);
@@ -878,7 +1185,93 @@ button.danger:hover {
   align-items: start;
   justify-content: start;
   gap: 12px;
-  margin-bottom: 20px;
+  flex: 1 1 auto;
+}
+
+/* System controls (Discover/Settings/Sync/Edit) grouped into their own
+   compact, icon-only toolbar, separate from the pinned-apps grid above —
+   small and quiet by design (no text labels, glassy surface) so it reads
+   as a utility strip rather than competing with the user's own apps. */
+.system-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px;
+  border-radius: var(--radius-pill);
+  background: var(--header-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-1);
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+.system-toolbar-btn {
+  width: 38px;
+  height: 38px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.system-toolbar-btn .system-icon {
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: var(--text);
+}
+
+.system-toolbar-btn .system-icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* The visible title ("Settings", "Sync", ...) stays in the DOM for
+   screen readers and for the toolbar's accessible name, but a compact
+   icon-only toolbar has no room to show it — hide it visually only. */
+.system-toolbar-btn .system-copy {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Transient state (a panel is open) reads as a soft accent tint —
+   --accent-bg-strong rather than the lighter --accent-bg so it stays
+   legible at this button's small (38px) size. */
+.system-toolbar-btn.active {
+  background: var(--accent-bg-strong);
+  border: none;
+  box-shadow: none;
+}
+
+.system-toolbar-btn.active .system-icon {
+  color: var(--accent);
+}
+
+/* The edit toggle is a persistent mode, not a transient panel — give it a
+   solid fill so "editing is on" reads unambiguously at a glance, distinct
+   from the other toolbar buttons' lighter "panel open" tint. */
+.system-toolbar-btn.edit-toggle.active {
+  background: var(--accent);
+}
+
+.system-toolbar-btn.edit-toggle.active .system-icon {
+  color: var(--on-accent);
 }
 
 .modal-card.browse-open {
@@ -937,7 +1330,9 @@ button.danger:hover {
   width: 42px;
   height: 42px;
   flex-shrink: 0;
-  border-radius: var(--radius);
+  /* ~24% of the side length — a rounded-square "squircle" rather than the
+     generic --radius token, which reads too round at this small size. */
+  border-radius: 10px;
   background: var(--icon-bg);
   border: 1px solid var(--icon-border);
   display: grid;
@@ -1034,7 +1429,7 @@ button.danger:hover {
 }
 
 .system-tile:hover {
-  transform: translateY(-3px) scale(1.03);
+  transform: scale(1.03);
   box-shadow: var(--shadow-2);
 }
 
@@ -1094,15 +1489,24 @@ button.danger:hover {
   border: 1px solid transparent;
   box-shadow: none;
   text-align: center;
+  /* box-shadow is intentionally not in this list — see .app-tile::before
+     below, which fades the hover shadow in via opacity instead of
+     animating box-shadow's blur directly (cheaper to repaint every
+     frame). */
   transition: transform var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease),
-    box-shadow var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+    background var(--dur-fast) var(--ease);
   min-width: 0;
   animation: tile-enter var(--dur-slow) var(--ease-out) both;
 }
 
+/* A quiet, static "editing" cue across the whole grid — a faint outline
+   on every tile — rather than the classic wiggling-icons pattern, which
+   is exactly the kind of always-on decorative animation the rest of this
+   file avoids. */
 .app-tile--draggable {
   touch-action: none;
   cursor: grab;
+  border-color: var(--border);
 }
 
 .app-tile.dragging {
@@ -1114,11 +1518,38 @@ button.danger:hover {
   will-change: transform;
 }
 
+/* Hover "lift" shadow, isolated on its own layer so only its opacity
+   (not the box-shadow itself) animates. box-shadow blur is recomputed on
+   every repaint while it's changing, so animating opacity on a
+   pre-rendered shadow layer is the cheaper way to fade one in. */
+.app-tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: var(--shadow-1);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+
+.app-tile:hover::before {
+  opacity: 1;
+}
+
 .app-tile:hover {
-  transform: translateY(-4px) scale(1.02);
+  transform: scale(1.02);
   border-color: var(--tile-border);
   background: var(--tile-bg-hover);
-  box-shadow: var(--shadow-1);
+}
+
+/* The global button:hover scale (transform: scale(1.01), further up) would
+   otherwise apply here too since .system-toolbar-btn is still a <button> —
+   re-flatten it so the toolbar stays visually quiet, matching the other
+   icon-only toolbars in this file. */
+.system-toolbar-btn:hover {
+  transform: none;
+  background: var(--surface-hover);
 }
 
 .app-tile:active,
@@ -1171,7 +1602,9 @@ button.danger:active {
   min-height: 56px;
   flex-shrink: 0;
   margin: 0 auto;
-  border-radius: var(--radius);
+  /* ~25% of the side length — a rounded-square "squircle" rather than the
+     generic --radius token, which reads too round at this small size. */
+  border-radius: 14px;
   background: var(--icon-bg);
   border: 1px solid var(--icon-border);
   display: grid;
@@ -1216,12 +1649,14 @@ button.danger:active {
 
 .app-remove {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 6px;
+  right: 6px;
   border: none;
   border-radius: var(--radius-pill);
-  width: 26px;
-  height: 26px;
+  /* A bit bigger than before — 26px read as a small target to tap
+     precisely on a phone-sized icon grid. */
+  width: 28px;
+  height: 28px;
   min-width: 0;
   min-height: 0;
   display: flex;
@@ -1229,15 +1664,16 @@ button.danger:active {
   justify-content: center;
   padding: 0;
   background: var(--danger);
-  color: #ffffff;
+  color: var(--on-danger);
   cursor: pointer;
   opacity: 0.85;
+  box-shadow: var(--shadow-1);
   transition: opacity var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
 }
 
 .app-remove svg {
-  width: 12px;
-  height: 12px;
+  width: 13px;
+  height: 13px;
   display: block;
 }
 
@@ -1249,7 +1685,7 @@ button.danger:active {
 
 .app-remove:hover {
   opacity: 1;
-  transform: scale(1.08);
+  transform: scale(1.05);
 }
 
 .system-grid>* {
@@ -1266,8 +1702,12 @@ button.danger:active {
   .modal-card,
   .modal-backdrop.open .modal-card,
   .app-tile,
+  .app-tile::before,
+  .accent-swatch,
+  .accent-swatch::after,
   .system-grid>*,
-  .browse-row {
+  .browse-row,
+  :root[data-tile-style='frosted'] .app-tile {
     animation: none;
     transition: none;
   }
@@ -1417,7 +1857,7 @@ button.danger:active {
   border-radius: var(--radius-pill);
   border: none;
   background: var(--danger);
-  color: #ffffff;
+  color: var(--on-danger);
   font-size: 1.25rem;
   display: grid;
   place-items: center;
@@ -1430,7 +1870,7 @@ button.danger:active {
 
 .ob-close:hover {
   opacity: 1;
-  transform: scale(1.08);
+  transform: scale(1.05);
 }
 
 .ob-close:focus-visible {
