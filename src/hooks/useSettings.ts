@@ -2,17 +2,36 @@ import { useEffect, useMemo, useState } from 'preact/hooks';
 import { storage_get } from '../vendor/mistlib/wrappers/web/index.js';
 import { readDeviceId } from '../utils/device';
 
+export type ThemeMode = 'light' | 'dark' | 'auto';
+
 export type Settings = {
-  darkMode: boolean;
+  theme: ThemeMode;
   backgroundUrl: string;
 };
 
 const STORAGE_KEY = 'tc-home-settings';
 
 const defaultSettings: Settings = {
-  darkMode: true,
+  theme: 'auto',
   backgroundUrl: '',
 };
+
+// Reads settings written by an older build (a plain `darkMode: boolean`
+// instead of the light/dark/auto `theme` field) and carries the user's
+// existing explicit choice forward so upgrading doesn't flip anyone's theme.
+function migrateSettings(raw: unknown): Settings {
+  if (!raw || typeof raw !== 'object') return defaultSettings;
+  const value = raw as Record<string, unknown>;
+  const backgroundUrl = typeof value.backgroundUrl === 'string' ? value.backgroundUrl : '';
+
+  if (value.theme === 'light' || value.theme === 'dark' || value.theme === 'auto') {
+    return { theme: value.theme, backgroundUrl };
+  }
+  if (typeof value.darkMode === 'boolean') {
+    return { theme: value.darkMode ? 'dark' : 'light', backgroundUrl };
+  }
+  return { ...defaultSettings, backgroundUrl };
+}
 
 import { getMistNode } from '../utils/mist';
 
@@ -22,7 +41,7 @@ export function useSettings() {
     if (!raw) return defaultSettings;
 
     try {
-      return JSON.parse(raw) as Settings;
+      return migrateSettings(JSON.parse(raw));
     } catch {
       return defaultSettings;
     }
@@ -70,16 +89,20 @@ export function useSettings() {
   }, [settings.backgroundUrl]);
 
   useEffect(() => {
-    const { darkMode } = settings;
+    const { theme } = settings;
 
-    document.documentElement.classList.toggle('light', !darkMode);
+    if (theme === 'auto') {
+      delete document.documentElement.dataset.theme;
+    } else {
+      document.documentElement.dataset.theme = theme;
+    }
 
     const bgValue = resolvedBackground ? `url(${resolvedBackground})` : 'none';
     document.documentElement.style.setProperty('--custom-bg', bgValue);
-  }, [settings.darkMode, resolvedBackground]);
+  }, [settings.theme, resolvedBackground]);
 
-  const setDarkMode = (value: boolean) => {
-    setSettings((prev) => ({ ...prev, darkMode: value }));
+  const setTheme = (value: ThemeMode) => {
+    setSettings((prev) => ({ ...prev, theme: value }));
   };
 
   const setBackgroundUrl = (value: string) => {
@@ -96,7 +119,7 @@ export function useSettings() {
 
   return {
     settings,
-    setDarkMode,
+    setTheme,
     setBackgroundUrl,
     replaceSettings,
     resetBackground,

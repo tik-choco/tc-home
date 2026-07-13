@@ -75,7 +75,7 @@ export function App() {
 
   const {
     settings,
-    setDarkMode,
+    setTheme,
     setBackgroundUrl,
     replaceSettings,
     resetBackground,
@@ -83,9 +83,9 @@ export function App() {
   } = useSettings();
 
   const currentSettings = useMemo(() => ({
-    darkMode: settings.darkMode,
+    theme: settings.theme,
     backgroundUrl: settings.backgroundUrl,
-  }), [settings.darkMode, settings.backgroundUrl]);
+  }), [settings.theme, settings.backgroundUrl]);
 
   const {
     roomId,
@@ -284,10 +284,10 @@ export function App() {
       <SettingsPanel
         open={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        darkMode={settings.darkMode}
+        theme={settings.theme}
         backgroundUrl={settings.backgroundUrl}
         previewUrl={previewBackground}
-        onToggleDarkMode={setDarkMode}
+        onThemeChange={setTheme}
         onBackgroundUrlChange={setBackgroundUrl}
         onUploadBackground={setBackgroundUrl}
         onResetBackground={resetBackground}
