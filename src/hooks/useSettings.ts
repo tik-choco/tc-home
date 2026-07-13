@@ -50,7 +50,12 @@ export function useSettings() {
   const [resolvedBackground, setResolvedBackground] = useState('');
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    } catch {
+      // Storage full — settings stay in effect for this session but won't
+      // persist across reload until space frees up.
+    }
   }, [settings]);
 
   useEffect(() => {
