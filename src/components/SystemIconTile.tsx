@@ -10,7 +10,8 @@ export function SystemIconTile({ title, onClick, className = '', icon, active }:
   return (
     <button
       type="button"
-      class={`app-tile system-tile ${active ? 'active' : ''} ${className}`}
+      class={`${active ? 'active' : ''} ${className}`}
+      title={title}
       onClick={onClick}
     >
       <div class={`system-icon ${icon}`} aria-hidden="true">

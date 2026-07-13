@@ -1,7 +1,7 @@
 import { storage_add } from '../vendor/mistlib/wrappers/web/index.js';
 import { getMistNode } from '../utils/mist';
 import { requestOnboarding } from '../lib/onboarding';
-import type { ThemeMode } from '../hooks/useSettings';
+import type { ThemeMode, TileStyle } from '../hooks/useSettings';
 
 type Props = {
   open: boolean;
@@ -9,10 +9,14 @@ type Props = {
   theme: ThemeMode;
   backgroundUrl: string;
   previewUrl: string;
+  tileStyle: TileStyle;
+  accentColor: string;
   onThemeChange: (next: ThemeMode) => void;
   onBackgroundUrlChange: (url: string) => void;
   onResetBackground: () => void;
   onUploadBackground: (url: string) => void;
+  onTileStyleChange: (next: TileStyle) => void;
+  onAccentColorChange: (next: string) => void;
 };
 
 const THEME_OPTIONS: { value: ThemeMode; label: string }[] = [
@@ -20,6 +24,22 @@ const THEME_OPTIONS: { value: ThemeMode; label: string }[] = [
   { value: 'dark', label: 'ダーク' },
   { value: 'auto', label: '自動' },
 ];
+
+const TILE_STYLE_OPTIONS: { value: TileStyle; label: string }[] = [
+  { value: 'standard', label: '標準' },
+  { value: 'frosted', label: 'くもりガラス' },
+];
+
+const ACCENT_PRESETS: { value: string; label: string }[] = [
+  { value: '', label: 'ティール' },
+  { value: '#2563eb', label: 'ブルー' },
+  { value: '#7c3aed', label: 'パープル' },
+  { value: '#db2777', label: 'ピンク' },
+  { value: '#ea580c', label: 'オレンジ' },
+  { value: '#16a34a', label: 'グリーン' },
+];
+
+const DEFAULT_ACCENT_HEX = '#0d9488';
 
 function SunIcon() {
   return (
@@ -59,10 +79,14 @@ export function SettingsPanel({
   theme,
   backgroundUrl,
   previewUrl,
+  tileStyle,
+  accentColor,
   onThemeChange,
   onBackgroundUrlChange,
   onResetBackground,
   onUploadBackground,
+  onTileStyleChange,
+  onAccentColorChange,
 }: Props) {
   const handleFileChange = async (event: Event) => {
     const input = event.currentTarget as HTMLInputElement;
@@ -110,6 +134,56 @@ export function SettingsPanel({
                 </button>
               ))}
             </div>
+          </div>
+
+          <div class="settings-row">
+            <span class="settings-label">アイコンの背景</span>
+            <div class="theme-switch" role="group" aria-label="アイコンの背景スタイルを選択">
+              {TILE_STYLE_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={tileStyle === option.value}
+                  onClick={() => onTileStyleChange(option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <p class="subtle">背景画像の上でアイコンと文字を読みやすくするスタイルを選べます</p>
+          </div>
+
+          <div class="settings-row">
+            <span class="settings-label">アクセントカラー</span>
+            <div class="accent-swatches" role="group" aria-label="アクセントカラーを選択">
+              {ACCENT_PRESETS.map((preset) => {
+                const selected = accentColor === preset.value;
+                return (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    class="accent-swatch"
+                    style={`background: ${preset.value || DEFAULT_ACCENT_HEX};`}
+                    aria-pressed={selected}
+                    aria-label={preset.label}
+                    onClick={() => onAccentColorChange(preset.value)}
+                  />
+                );
+              })}
+              <input
+                type="color"
+                aria-label="アクセントカラーを自由選択"
+                value={accentColor || DEFAULT_ACCENT_HEX}
+                onInput={(event) =>
+                  onAccentColorChange((event.currentTarget as HTMLInputElement).value)
+                }
+              />
+            </div>
+            {accentColor ? (
+              <button type="button" class="link-reset" onClick={() => onAccentColorChange('')}>
+                既定に戻す
+              </button>
+            ) : null}
           </div>
 
           <div class="settings-row">

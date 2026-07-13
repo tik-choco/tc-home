@@ -77,6 +77,8 @@ export function App() {
     settings,
     setTheme,
     setBackgroundUrl,
+    setTileStyle,
+    setAccentColor,
     replaceSettings,
     resetBackground,
     previewBackground,
@@ -85,7 +87,9 @@ export function App() {
   const currentSettings = useMemo(() => ({
     theme: settings.theme,
     backgroundUrl: settings.backgroundUrl,
-  }), [settings.theme, settings.backgroundUrl]);
+    tileStyle: settings.tileStyle,
+    accentColor: settings.accentColor,
+  }), [settings.theme, settings.backgroundUrl, settings.tileStyle, settings.accentColor]);
 
   const {
     roomId,
@@ -287,10 +291,14 @@ export function App() {
         theme={settings.theme}
         backgroundUrl={settings.backgroundUrl}
         previewUrl={previewBackground}
+        tileStyle={settings.tileStyle}
+        accentColor={settings.accentColor}
         onThemeChange={setTheme}
         onBackgroundUrlChange={setBackgroundUrl}
         onUploadBackground={setBackgroundUrl}
         onResetBackground={resetBackground}
+        onTileStyleChange={setTileStyle}
+        onAccentColorChange={setAccentColor}
       />
 
       <DiffConfirmPanel

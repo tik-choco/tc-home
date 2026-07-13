@@ -31,6 +31,9 @@ export function AddPanel({
         onClick={(event) => event.stopPropagation()}
       >
         <div class="add-card">
+          <button type="button" class="add-card-close" onClick={onClose} aria-label="閉じる">
+            <span aria-hidden="true">×</span>
+          </button>
           <label for="site-url">Web site URL</label>
           <div class="add-row">
             <input
@@ -56,11 +59,16 @@ export function AddPanel({
                 if (event.key === 'Enter') onSave();
               }}
             />
+          </div>
+          <p class="hint">{message}</p>
+          <div class="add-actions">
+            <button type="button" class="ghost" onClick={onClose}>
+              キャンセル
+            </button>
             <button type="button" onClick={onSave} class="primary" disabled={isFetching}>
               保存
             </button>
           </div>
-          <p class="hint">{message}</p>
         </div>
       </div>
     </div>
