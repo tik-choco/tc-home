@@ -14,7 +14,6 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       MISTLIB_REPO: ${{ secrets.MISTLIB_REPO }}
       MISTLIB_REF: develop
     permissions:
@@ -24,12 +23,13 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version: 'lts/*'
+          check-latest: true
           cache: 'npm'
 
       - name: Install dependencies
