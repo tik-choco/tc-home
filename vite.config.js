@@ -17,12 +17,23 @@ export default defineConfig(function (_a) {
     // MISTLIB_LOCAL is build-time config that must never reach client code.
     var localEngine = loadEnv(mode, process.cwd(), '').MISTLIB_LOCAL;
     var alias = {};
+    var localEnginePath;
     if (localEngine) {
-        alias['@tik-choco/mistlib'] = path.resolve(process.cwd(), localEngine);
-        console.log("vite: using local mist engine at ".concat(alias['@tik-choco/mistlib']));
+        localEnginePath = path.resolve(process.cwd(), localEngine);
+        alias['@tik-choco/mistlib'] = localEnginePath;
+        console.log("vite: using local mist engine at ".concat(localEnginePath));
     }
     return {
         base: '/tc-home/',
         resolve: { alias: alias },
+        // The dev server refuses to serve files outside the project root
+        // (server.fs.allow) — and the local engine lives outside it. Widen the
+        // allow list to exactly the aliased pkg dir (plus the project root) only
+        // while MISTLIB_LOCAL is active; the production build is unaffected.
+        server: {
+            fs: {
+                allow: localEnginePath ? [process.cwd(), localEnginePath] : undefined,
+            },
+        },
     };
 });
