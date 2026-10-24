@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { DELIVERY_RELIABLE, EVENT_RAW, MistNode } from '../vendor/mistlib/wrappers/web/index.js';
+import { DELIVERY_RELIABLE, EVENT_RAW, MistNode } from '@tik-choco/mistlib-web';
 import type { Site } from '../utils/site';
 import type { Settings } from './useSettings';
 import { readDeviceId } from '../utils/device';

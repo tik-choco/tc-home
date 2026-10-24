@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'preact/hooks';
-import { storage_get } from '../vendor/mistlib/wrappers/web/index.js';
+import { storage_get } from '@tik-choco/mistlib-web';
 import { readDeviceId } from '../utils/device';
 
 export type ThemeMode = 'light' | 'dark' | 'auto';

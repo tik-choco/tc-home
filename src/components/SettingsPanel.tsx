@@ -1,4 +1,4 @@
-import { storage_add } from '../vendor/mistlib/wrappers/web/index.js';
+import { storage_add } from '@tik-choco/mistlib-web';
 import { getMistNode } from '../utils/mist';
 import { requestOnboarding } from '../lib/onboarding';
 import type { ThemeMode, TileStyle } from '../hooks/useSettings';
