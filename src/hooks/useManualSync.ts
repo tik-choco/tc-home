@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { DELIVERY_RELIABLE, EVENT_RAW, MistNode } from '@tik-choco/mistlib-web';
+import { DELIVERY_RELIABLE, MistNode } from '@tik-choco/mistlib-web';
 import type { Site } from '../utils/site';
 import type { Settings } from './useSettings';
 import { readDeviceId } from '../utils/device';
 import { getMistNode } from '../utils/mist';
+import { createManualSyncEventHandler } from './manualSyncEvents';
 
 type SyncStatus = 'idle' | 'connecting' | 'connected' | 'error';
 
@@ -36,7 +37,6 @@ type SyncMessage =
 const ROOM_QUERY_KEY = 'room';
 const ROOM_PREFIX = '^%70Xk*8^%c5V';
 const BROADCAST_GRACE_MS = 500;
-const PRESENCE_EVENT_TYPES = new Set([2, 3, 4]);
 
 function readInitialRoomId() {
   const queryRoom = new URLSearchParams(window.location.search).get(ROOM_QUERY_KEY)?.trim();
@@ -205,7 +205,7 @@ export function useManualSync({
     if (!runtimeNode || !runtimeNode.initialized) return;
 
     try {
-      runtimeNode.leaveRoom();
+      runtimeNode.leaveAllRooms();
     } catch {
       // Ignore cleanup errors from partially initialized WASM state.
     }
@@ -415,19 +415,11 @@ export function useManualSync({
         return;
       }
 
-      node.onEvent((eventType, fromId, payload) => {
-        if (eventType === EVENT_RAW) {
-          handleIncomingMessage(fromId, payload as Uint8Array);
-          return;
-        }
-
-        if (PRESENCE_EVENT_TYPES.has(eventType)) {
-          refreshPeerCount(node);
-          if (eventType === 2) {
-            sendCurrentSnapshot();
-          }
-        }
-      });
+      node.onEvent(createManualSyncEventHandler({
+        onRaw: handleIncomingMessage,
+        onPresence: () => refreshPeerCount(node),
+        onNeighbors: sendCurrentSnapshot,
+      }));
 
       if (sessionId === connectSessionRef.current) {
         node.joinRoom(buildTransportRoomId(normalizedRoomId));
